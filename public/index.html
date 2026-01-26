@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Music Quest</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f1115" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="quest-bar">
+      <h2>Quests</h2>
+      <ul id="quest-list"></ul>
+    </aside>
+
+    <main id="content">
+      <div id="header-controls">
+        <button id="back-btn" onclick="goBack()">← Back</button>
+      </div>
+      <div id="main-content">
+        <h1>Music Quest</h1>
+        <p>Select a quest or explore the catalog.</p>
+
+        <div id="search">
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Search artists, albums, or songs..."
+          />
+        </div>
+
+        <div id="results"></div>
+      </div>
+      <div id="bottom-tabs">
+        <button class="tab-btn active" onclick="showSearchTab()">Search</button>
+        <button class="tab-btn" onclick="showCollectionTab()">Collection</button>
+        <button class="tab-btn" onclick="showProfileTab()">Profile</button>
+        <button class="tab-btn" id="dev-tab-btn" onclick="showDeveloperTab()" style="display: none;">Developer</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

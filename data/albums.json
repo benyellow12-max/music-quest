@@ -1,0 +1,30 @@
+[
+    {
+        "id": "alb_0001",
+        "title": "Music",
+        "artistIds": ["art_0001"],
+        "year": 1993,
+        "recordingIds": ["rec_0001", "rec_0005", "rec_0006"]
+    },
+    {
+        "id": "alb_0002",
+        "title": "Hydroponic",
+        "artistIds": ["art_0001"],
+        "year": 1992,
+        "recordingIds": ["rec_0002"]
+    },
+    {
+        "id": "alb_0003",
+        "title": "Archive",
+        "artistIds": ["art_0001"],
+        "year": 2015,
+        "recordingIds": ["rec_0003"]
+    },
+    {
+        "id": "alb_0004",
+        "title": "I've Got a Few Friends and I Wish They Were Mine",
+        "artistIds": ["art_0002"],
+        "year": 2018,
+        "recordingIds": ["rec_0004"]
+    }
+]

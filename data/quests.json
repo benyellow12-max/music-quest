@@ -1,0 +1,86 @@
+[
+  {
+    "id": "qst_0001",
+    "templateId": "qtpl_0001",
+    "params": {
+      "requiredCount": 1
+    },
+    "state": {
+      "status": "active",
+      "matchedRecordingIds": [],
+      "matchedRecordingIdsSet": {}
+    },
+    "reward": {
+      "type": "song",
+      "entityId": "rec_0001"
+    }
+  },
+  {
+    "id": "qst_0002",
+    "templateId": "qtpl_0001",
+    "params": {
+      "requiredCount": 50,
+      "artistId": "art_0001"
+    },
+    "state": {
+      "status": "active",
+      "matchedRecordingIds": [],
+      "matchedRecordingIdsSet": {}
+    },
+    "reward": {
+      "type": "song",
+      "entityId": "rec_0002"
+    }
+  },
+  {
+    "id": "qst_0003",
+    "templateId": "qtpl_0004",
+    "params": {
+      "startYear": 1990,
+      "endYear": 1992,
+      "artistId": "art_0001"
+    },
+    "state": {
+      "status": "active",
+      "matchedRecordingIds": [],
+      "matchedRecordingIdsSet": {}
+    },
+    "reward": {
+      "type": "song",
+      "entityId": "rec_0003"
+    }
+  },
+  {
+    "id": "qst_0004",
+    "templateId": "qtpl_0004",
+    "params": {
+      "startYear": 2014,
+      "endYear": 2014
+    },
+    "state": {
+      "status": "active",
+      "matchedRecordingIds": [],
+      "matchedRecordingIdsSet": {}
+    },
+    "reward": {
+      "type": "song",
+      "entityId": "rec_0004"
+    }
+  },
+  {
+    "templateId": "qtpl_0005",
+    "params": {
+      "genreId": "gen_0002",
+      "artistId": "art_0001"
+    },
+    "state": {
+      "status": "active",
+      "matchedRecordingIds": [],
+      "matchedRecordingIdsSet": {}
+    },
+    "reward": {
+      "type": "song",
+      "entityId": "rec_0005"
+    }
+  }
+]

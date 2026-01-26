@@ -1,0 +1,41 @@
+[
+  {
+    "id": "plat_0001",
+    "entityType": "recording",
+    "entityId": "rec_0001",
+    "platform": "youtube",
+    "url": "https://www.youtube.com/watch?v=93Uxa9eV_L0",
+    "notes": "Album version"
+  },
+  {
+    "id": "plat_0002",
+    "entityType": "recording",
+    "entityId": "rec_0001",
+    "platform": "spotify",
+    "url": "https://open.spotify.com/track/2P2afx4dwPgKi3DKgyeny9",
+    "notes": "Album version"
+  },
+  {
+    "id": "plat_0003",
+    "entityType": "artist",
+    "entityId": "art_0001",
+    "platform": "wikipedia",
+    "url": "https://en.wikipedia.org/wiki/311_(band)"
+  },
+  {
+    "id": "plat_0004",
+    "entityType": "recording",
+    "entityId": "rec_0001",
+    "platform": "apple_music",
+    "url": "https://music.apple.com/us/song/welcome/303089097",
+    "notes": "Album version"
+  },
+  {
+    "id": "plat_0005",
+    "entityType": "recording",
+    "entityId": "rec_0002",
+    "platform": "youtube",
+    "url": "https://www.youtube.com/watch?v=GfDSc-nN6C8",
+    "notes": "Hydroponic version"
+  }
+]

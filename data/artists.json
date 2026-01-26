@@ -1,0 +1,21 @@
+[
+  {
+    "id": "art_0001",
+    "name": "311",
+    "sort_name": "311",
+    "notes": "American rock band"
+  },
+  {
+    "id": "art_0002",
+    "name": "Daisy the Great",
+    "sort_name": "Daisy the Great",
+    "notes": "Indie pop/rock band"
+  },
+  {
+    "id": "art_0003",
+    "name": "Audiotree Live",
+    "sort_name": "Audiotree Live",
+    "notes": "Live music recording series"
+  }
+]
+

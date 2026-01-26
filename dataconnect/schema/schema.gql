@@ -1,0 +1,44 @@
+type User @table {
+  username: String!
+  createdAt: Timestamp!
+  email: String
+  avatarUrl: String
+  totalScore: Int
+}
+
+type Song @table {
+  title: String!
+  artist: String!
+  genre: String!
+  difficulty: Int!
+  songUrl: String!
+  createdAt: Timestamp!
+  imageUrl: String
+  duration: Int
+}
+
+type Quest @table {
+  song: Song
+  name: String!
+  description: String!
+  requiredScore: Int!
+  createdAt: Timestamp!
+  rewardDescription: String
+}
+
+type UserSong @table(key: ["user", "song"]) {
+  user: User!
+  song: Song!
+  unlockedAt: Timestamp!
+  bestScore: Int
+  lastPlayedAt: Timestamp
+}
+
+type UserQuest @table(key: ["user", "quest"]) {
+  user: User!
+  quest: Quest!
+  status: String!
+  createdAt: Timestamp!
+  completedAt: Timestamp
+  scoreAchieved: Int
+}

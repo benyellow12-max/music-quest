@@ -1,0 +1,29 @@
+mutation CreateNewUser($username: String!, $email: String!) @auth(level: USER) {
+  user_insert(data: {username: $username, email: $email, createdAt_expr: "request.time"})
+}
+
+query GetSongById($songId: UUID!) @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  song(id: $songId) {
+    id
+    title
+    artist
+    genre
+    duration
+    imageUrl
+    songUrl
+  }
+}
+
+mutation AddSongToUser($userId: UUID!, $songId: UUID!) @auth(level: USER) {
+  userSong_insert(data: {userId: $userId, songId: $songId, unlockedAt_expr: "request.time"})
+}
+
+query ListQuestsForSong($songId: UUID!) @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  quests(where: {songId: {eq: $songId}}) {
+    id
+    name
+    description
+    requiredScore
+    rewardDescription
+  }
+}

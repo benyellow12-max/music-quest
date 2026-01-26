@@ -1,0 +1,80 @@
+mutation CreateDemoData @transaction @auth(level: PUBLIC, insecureReason: "This operation is used to seed the database with demo data, and is safe to expose to the public.") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      username: "demouser1",
+	  createdAt: "2024-04-29T12:00:00Z",
+	  email: "user1@example.com"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      username: "demouser2",
+	  createdAt: "2024-04-29T12:00:00Z",
+	  email: "user2@example.com"
+    }
+  ])
+  song_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440002",
+      title: "Song 1",
+      artist: "Artist 1",
+	  genre: "Pop",
+	  difficulty: 1,
+	  songUrl: "http://example.com/song1.mp3",
+	  createdAt: "2024-04-29T12:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440003",
+      title: "Song 2",
+      artist: "Artist 2",
+	  genre: "Rock",
+	  difficulty: 2,
+	  songUrl: "http://example.com/song2.mp3",
+	  createdAt: "2024-04-29T12:00:00Z"
+    }
+  ])
+  quest_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440004",
+      name: "Quest 1",
+      description: "Description 1",
+	  requiredScore: 100,
+	  songId: "550e8400-e29b-41d4-a716-446655440002",
+	  createdAt: "2024-04-29T12:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440005",
+      name: "Quest 2",
+      description: "Description 2",
+	  requiredScore: 200,
+	  songId: "550e8400-e29b-41d4-a716-446655440003",
+	  createdAt: "2024-04-29T12:00:00Z"
+    }
+  ])
+  userQuest_insertMany(data: [
+    {
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      questId: "550e8400-e29b-41d4-a716-446655440004",
+	  status: "Not Started",
+	  createdAt: "2024-04-29T12:00:00Z"
+    },
+    {
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      questId: "550e8400-e29b-41d4-a716-446655440005",
+	  status: "Completed",
+	  createdAt: "2024-04-29T12:00:00Z"
+    }
+  ])
+  userSong_insertMany(data: [
+    {
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      songId: "550e8400-e29b-41d4-a716-446655440002",
+	  unlockedAt: "2024-04-29T12:00:00Z"
+    },
+    {
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      songId: "550e8400-e29b-41d4-a716-446655440003",
+	  unlockedAt: "2024-04-29T12:00:00Z"
+    }
+  ])
+}

@@ -1,0 +1,92 @@
+[
+  {
+    "song_id": "rec_0001",
+    "title": "Welcome",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1993,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0001", "gen_0002", "gen_0003", "gen_0004"],
+    "audio": {
+      "bpm": 144,
+      "key": "A minor",
+      "time_signature": "4/4",
+      "duration_seconds": 175
+    }
+  },
+  {
+    "song_id": "rec_0002",
+    "title": "Welcome",
+    "variant": "Hydroponic Version",
+    "artist_ids": ["art_0001"],
+    "year": 1992,
+    "genre_ids": ["gen_0001", "gen_0002", "gen_0003", "gen_0004"],
+    "album_id": ["alb_0002"],
+    "audio": {
+      "bpm": 144,
+      "key": "A minor",
+      "time_signature": "4/4",
+      "duration_seconds": 177
+    }
+  },
+  {
+    "song_id": "rec_0003",
+    "title": "Welcome",
+    "variant": "Preproduction Version",
+    "artist_ids": ["art_0001"],
+    "year": 1992,
+    "genre_ids": ["gen_0001", "gen_0002", "gen_0003", "gen_0004"],
+    "album_id": ["alb_0003"],
+    "audio": {
+      "bpm": 144,
+      "key": "A minor",
+      "time_signature": "4/4",
+      "duration_seconds": 182
+    }
+  },
+  {
+    "song_id": "rec_0004",
+    "title": "The Record Player Song",
+    "variant": "Album Version",
+    "artist_ids": ["art_0002"],
+    "year": 2018,
+    "album_id": ["alb_0004"],
+    "genre_ids": ["gen_0005", "gen_0006", "gen_0007"],
+    "audio": {
+      "bpm": 140,
+      "key": "A major",
+      "time_signature": "4/4",
+      "duration_seconds": 203
+    }
+  },
+  {
+    "song_id": "rec_0005",
+    "title": "Freak Out",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1992,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0001", "gen_0002", "gen_0003", "gen_0004"],
+    "audio": {
+      "bpm": 96,
+      "key": "A major",
+      "time_signature": "4/4",
+      "duration_seconds": 223
+    }
+  },
+  {
+    "song_id": "rec_0006",
+    "title": "Visit",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1992,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0001", "gen_0002", "gen_0003", "gen_0004"],
+    "audio": {
+      "bpm": 164,
+      "key": "A major",
+      "time_signature": "4/4",
+      "duration_seconds": 221
+    }
+  }
+]

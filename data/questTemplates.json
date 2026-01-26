@@ -1,0 +1,47 @@
+[
+  {
+    "id": "qtpl_0001",
+    "type": "listen_count",
+    "description": "Listen to {{count}} recordings by {{artistId}}",
+    "params": {
+      "count": "number",
+      "artistId": "art_id"
+    }
+  },
+  {
+    "id": "qtpl_0002",
+    "type": "listen_minutes",
+    "description": "Listen to {{artistId}} for {{minutes}} minutes",
+    "params": {
+      "artistId": "art_id",
+      "minutes": "number"
+    }
+  },
+  {
+    "id": "qtpl_0003",
+    "type": "streak_app",
+    "description": "Open the app for {{days}} consecutive days",
+    "params": {
+      "days": "number"
+    }
+  },
+  {
+    "id": "qtpl_0004",
+    "type": "listen_by_year",
+    "description": "Listen to any song released between {{startYear}} and {{endYear}} by {{artistId}}",
+    "params": {
+      "startYear": "number",
+      "endYear": "number",
+      "artistId": "art_id"
+    }
+  },
+  {
+    "id": "qtpl_0005",
+    "type": "listen_by_genre",
+    "description": "Listen to any song in the {{genreId}} genre by {{artistId}}",
+    "params": {
+      "genreId": "gen_id",
+      "artistId": "art_id"
+    }
+  }
+]

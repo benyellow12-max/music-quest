@@ -1,0 +1,37 @@
+[
+  {
+    "id": "gen_0001",
+    "name": "Rock",
+    "parentId": null
+  },
+  {
+    "id": "gen_0002",
+    "name": "Hip Hop",
+    "parentId": null
+  },
+  {
+    "id": "gen_0003",
+    "name": "Funk",
+    "parentId": null
+  },
+  {
+    "id": "gen_0004",
+    "name": "Metal",
+    "parentId": "gen_0001"
+  },
+  {
+    "id": "gen_0005",
+    "name": "Pop",
+    "parentId": null
+  },
+  {
+    "id": "gen_0006",
+    "name": "Indie",
+    "parentId": null
+  },
+  {
+    "id": "gen_0007",
+    "name": "Contemporary Folk",
+    "parentId": null
+  }
+  ]
