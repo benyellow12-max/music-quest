@@ -4,10 +4,22 @@ if (!window.firebaseExports) {
 }
 const { auth, db, doc, getDoc, googleProvider, onAuthStateChanged, setDoc, signInWithPopup, signOut } = window.firebaseExports || {};
 
-const input = document.getElementById("search-input");
-const results = document.getElementById("results");
-const mainContent = document.getElementById("main-content");
-const content = document.getElementById("content");
+// Use getter functions for DOM elements to ensure they're fresh
+function getInput() {
+  return document.getElementById("search-input");
+}
+
+function getResults() {
+  return document.getElementById("results");
+}
+
+function getMainContent() {
+  return document.getElementById("main-content");
+}
+
+function getContent() {
+  return document.getElementById("content");
+}
 
 let currentUser = null;
 
@@ -80,7 +92,11 @@ async function loadAllData() {
   dataLoaded = true;
 }
 
-loadAllData().then(() => loadQuests());
+loadAllData().then(() => {
+  loadQuests().catch(err => {
+    console.error('Error loading quests:', err);
+  });
+});
 
 function getSongsWithoutQuests() {
   if (!dataLoaded) return [];
@@ -257,6 +273,33 @@ function setupSearchListener() {
   
   let searchTimeout = null;
   let searchAbortController = null;
+
+  // Show all artists and albums when input is focused or on load
+  const loadAllArtistsAndAlbums = async () => {
+    if (!dataLoaded) {
+      results.innerHTML = "<p>Loading data, please wait...</p>";
+      return;
+    }
+    
+    try {
+      if (searchAbortController) searchAbortController.abort();
+      searchAbortController = new AbortController();
+      const res = await fetch(`/search?q=`, { signal: searchAbortController.signal });
+      const data = await res.json();
+      renderResults(data);
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Search error', err);
+      }
+    }
+  };
+
+  input.addEventListener("focus", () => {
+    if (input.value.trim() === "") {
+      loadAllArtistsAndAlbums();
+    }
+  });
+
   input.addEventListener("input", () => {
     if (!dataLoaded) {
       results.innerHTML = "<p>Loading data, please wait...</p>";
@@ -267,7 +310,7 @@ function setupSearchListener() {
     if (searchTimeout) clearTimeout(searchTimeout);
 
     if (!q) {
-      results.innerHTML = "";
+      loadAllArtistsAndAlbums();
       return;
     }
 
@@ -285,9 +328,16 @@ function setupSearchListener() {
       }
     }, 150);
   });
+
+  // Load all artists and albums on initial setup if data is loaded
+  if (dataLoaded) {
+    loadAllArtistsAndAlbums();
+  }
 }
 
 setupSearchListener();
+
+console.log('[app.js] setupSearchListener completed');
 
 // Reusable DOM template fragments for search results
 const resultTemplates = {
@@ -396,12 +446,17 @@ function showArtist(artist) {
     
     const results = document.getElementById("results");
     if (results) results.innerHTML = "";
-    mainContent.innerHTML = "";
+    getMainContent().innerHTML = "";
     navigationHistory.push({ type: "artist", data: artist });
     updateBackButton();
 
     const artistAlbums = (allAlbums || []).filter(a => a && a.artistIds && Array.isArray(a.artistIds) && a.artistIds.includes(artist.id));
+    // Sort albums chronologically by year
+    artistAlbums.sort((a, b) => (a.year || 0) - (b.year || 0));
+    
     const artistSongs = (allSongs || []).filter(s => s && s.artist_ids && Array.isArray(s.artist_ids) && s.artist_ids.includes(artist.id));
+    // Sort songs alphabetically by title (case-insensitive)
+    artistSongs.sort((a, b) => (a?.title || '').localeCompare((b?.title || ''), undefined, { sensitivity: 'base' }));
     const artistPlatforms = getPlatformsForEntity('artist', artist.id);
 
     console.log("Filtered albums:", artistAlbums.length, "songs:", artistSongs.length);
@@ -444,26 +499,26 @@ function showArtist(artist) {
       html += `<p><em>No songs found</em></p>`;
     }
 
-    mainContent.innerHTML = html;
+    getMainContent().innerHTML = html;
     
     // Store current context for item navigation
     window._currentArtistContext = { albums: artistAlbums, songs: artistSongs };
   } catch(err) {
     console.error("Error in showArtist:", err);
-    mainContent.innerHTML = `<h1>Error</h1><p>${err.message}</p>`;
+    getMainContent().innerHTML = `<h1>Error</h1><p>${err.message}</p>`;
   }
 }
 
 function showAlbum(album) {
   try {
     if (!album) {
-      mainContent.innerHTML = `<h1>Error</h1><p>No album data provided</p>`;
+      getMainContent().innerHTML = `<h1>Error</h1><p>No album data provided</p>`;
       return;
     }
     
     const results = document.getElementById("results");
     if (results) results.innerHTML = "";
-    mainContent.innerHTML = "";
+    getMainContent().innerHTML = "";
     navigationHistory.push({ type: "album", data: album });
     updateBackButton();
 
@@ -497,13 +552,13 @@ function showAlbum(album) {
       html += `<p><em>No tracks found</em></p>`;
     }
 
-    mainContent.innerHTML = html;
+    getMainContent().innerHTML = html;
     
     // Store current context for item navigation
     window._currentAlbumContext = { artists: albumArtists, songs: albumSongs };
   } catch(err) {
     console.error("Error in showAlbum:", err);
-    mainContent.innerHTML = `<h1>Error</h1><p>${err.message}</p><pre>${err.stack}</pre>`;
+    getMainContent().innerHTML = `<h1>Error</h1><p>${err.message}</p><pre>${err.stack}</pre>`;
   }
 }
 
@@ -549,13 +604,13 @@ function getQuestsForSong(song) {
 function showSong(song) {
   try {
     if (!song) {
-      mainContent.innerHTML = `<h1>Error</h1><p>No song data provided</p>`;
+      getMainContent().innerHTML = `<h1>Error</h1><p>No song data provided</p>`;
       return;
     }
     
     const results = document.getElementById("results");
     if (results) results.innerHTML = "";
-    mainContent.innerHTML = "";
+    getMainContent().innerHTML = "";
     navigationHistory.push({ type: "song", data: song });
     updateBackButton();
 
@@ -620,7 +675,7 @@ function showSong(song) {
       </p>`;
     }
 
-    mainContent.innerHTML = html;
+    getMainContent().innerHTML = html;
     const listenBtn = document.getElementById("listen-btn");
     if (listenBtn) {
       listenBtn.onclick = () => markSongListened(song);
@@ -630,7 +685,7 @@ function showSong(song) {
     window._currentSongContext = { artists: songArtists, albums: songAlbums, genres: songGenres };
   } catch(err) {
     console.error("Error in showSong:", err);
-    mainContent.innerHTML = `<h1>Error</h1><p>${err.message}</p><pre>${err.stack}</pre>`;
+    getMainContent().innerHTML = `<h1>Error</h1><p>${err.message}</p><pre>${err.stack}</pre>`;
   }
 }
 
@@ -709,13 +764,13 @@ window.showSubgenreDirect = (idx, context) => {
 function showGenre(genre) {
   try {
     if (!genre) {
-      mainContent.innerHTML = `<h1>Error</h1><p>No genre data provided</p>`;
+      getMainContent().innerHTML = `<h1>Error</h1><p>No genre data provided</p>`;
       return;
     }
     
     const results = document.getElementById("results");
     if (results) results.innerHTML = "";
-    mainContent.innerHTML = "";
+    getMainContent().innerHTML = "";
     navigationHistory.push({ type: "genre", data: genre });
     updateBackButton();
 
@@ -763,45 +818,54 @@ function showGenre(genre) {
       html += `<p><em>No songs found</em></p>`;
     }
 
-    mainContent.innerHTML = html;
+    getMainContent().innerHTML = html;
     
     // Store current context for item navigation
     window._currentGenreContext = { songs: genreSongs, subgenres: subgenres };
   } catch(err) {
     console.error("Error in showGenre:", err);
-    mainContent.innerHTML = `<h1>Error</h1><p>${err.message}</p><pre>${err.stack}</pre>`;
+    getMainContent().innerHTML = `<h1>Error</h1><p>${err.message}</p><pre>${err.stack}</pre>`;
   }
 }
 
 async function loadQuests() {
-  const res = await fetch("/quests");
-  const quests = await res.json();
+  try {
+    const res = await fetch("/quests");
+    const quests = await res.json();
 
-  const list = document.getElementById("quest-list");
-  list.innerHTML = "";
-
-  quests.forEach(quest => {
-    const card = document.createElement("div");
-    card.className = "quest-card";
-
-    if (quest.state.status === "completed") {
-      card.classList.add("completed");
+    const list = document.getElementById("quest-list");
+    if (!list) {
+      console.warn('quest-list element not found');
+      return;
     }
+    
+    list.innerHTML = "";
 
-    const title = document.createElement("div");
-    title.className = "quest-title";
-    title.textContent = renderQuestTitle(quest);
+    quests.forEach(quest => {
+      const card = document.createElement("div");
+      card.className = "quest-card";
 
-    const progress = document.createElement("div");
-    progress.className = "quest-progress";
-    progress.textContent = renderQuestProgress(quest);
+      if (quest.state.status === "completed") {
+        card.classList.add("completed");
+      }
 
-    card.appendChild(title);
-    card.appendChild(progress);
+      const title = document.createElement("div");
+      title.className = "quest-title";
+      title.textContent = renderQuestTitle(quest);
 
-    card.onclick = () => showQuest(quest);
-    list.appendChild(card);
-  });
+      const progress = document.createElement("div");
+      progress.className = "quest-progress";
+      progress.textContent = renderQuestProgress(quest);
+
+      card.appendChild(title);
+      card.appendChild(progress);
+
+      card.onclick = () => showQuest(quest);
+      list.appendChild(card);
+    });
+  } catch (err) {
+    console.error('Error in loadQuests:', err);
+  }
 }
 
 function renderQuestTitle(quest) {
@@ -867,7 +931,7 @@ function showQuest(quest) {
     }
   }
 
-  mainContent.innerHTML = html;
+  getMainContent().innerHTML = html;
   
   const results = document.getElementById("results");
   if (results) results.innerHTML = "";
@@ -877,6 +941,7 @@ function showQuest(quest) {
 }
 
 function goBack() {
+  console.log('[goBack] called, navigationHistory length:', navigationHistory.length);
   if (navigationHistory.length <= 1) return;
   navigationHistory.pop(); // Remove current page
   const previous = navigationHistory[navigationHistory.length - 1];
@@ -904,7 +969,7 @@ function goBack() {
   } else if (previous.type === "profile") {
     showProfileTab();
   } else if (previous.type === "home") {
-    mainContent.innerHTML = `
+    getMainContent().innerHTML = `
       <h1>Music Quest</h1>
       <p>Select a quest or explore the catalog.</p>
 
@@ -941,7 +1006,7 @@ function showSearchTab() {
   tabs.forEach(tab => tab.classList.remove('active'));
   tabs[0].classList.add('active');
   
-  mainContent.innerHTML = `
+  getMainContent().innerHTML = `
     <h1>Music Quest</h1>
     <p>Select a quest or explore the catalog.</p>
 
@@ -996,7 +1061,7 @@ function showCollectionTab() {
     html += `<p><em>You haven't collected any songs yet. Complete quests to unlock songs!</em></p>`;
   }
   
-  mainContent.innerHTML = html;
+  getMainContent().innerHTML = html;
   
   // Store collection context
   window._collectionSongs = collectedSongs;
@@ -1018,7 +1083,7 @@ async function showProfileTab() {
 
   const isLoggedIn = currentUser !== null;
 
-  mainContent.innerHTML = `
+  getMainContent().innerHTML = `
     <h1>Your Profile</h1>
     <div style="margin: 0.5rem 0 1rem 0">
       ${isLoggedIn 
@@ -1175,7 +1240,7 @@ function showDeveloperTab() {
   const devTabButton = document.getElementById('dev-tab-btn');
   if (devTabButton) devTabButton.classList.add('active');
 
-  mainContent.innerHTML = `
+  getMainContent().innerHTML = `
     <h1>Developer Mode</h1>
     <p class="muted">Utilities for cache management and quest coverage checks.</p>
 
@@ -1267,15 +1332,19 @@ function showDeveloperTab() {
   renderSongsWithoutQuests();
 }
 
-loadQuests();
 
 // Listen for auth state changes
-onAuthStateChanged(auth, (user) => {
-  currentUser = user;
-  console.log('Auth state changed:', user ? user.email : 'Not logged in');
-});
+if (onAuthStateChanged && auth) {
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    console.log('Auth state changed:', user ? user.email : 'Not logged in');
+  });
+} else {
+  console.warn('Firebase auth not available');
+}
 
 // Expose functions to window for HTML onclick handlers
+console.log('[app.js] About to expose functions to window');
 window.showSearchTab = showSearchTab;
 window.showCollectionTab = showCollectionTab;
 window.showProfileTab = showProfileTab;
@@ -1287,6 +1356,7 @@ window.showGenre = showGenre;
 window.showQuest = showQuest;
 window.goBack = goBack;
 window.markSongListened = markSongListened;
+console.log('[app.js] Functions exposed to window, goBack is:', typeof window.goBack);
 
 // Fallback in case the initial visibility set runs before layout is ready
 ensureDeveloperTabVisible();

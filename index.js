@@ -380,7 +380,12 @@ app.get("/search", (req, res) => {
   const q = qRaw.toLowerCase();
 
   if (!q) {
-    return res.json({ artists: [], albums: [], songs: [] });
+    // Return all artists and albums when query is empty
+    return res.json({ 
+      artists: Array.from(artistsMap.values()),
+      albums: Array.from(albumsMap.values()),
+      songs: []
+    });
   }
 
   const searchArtists = Array.from(artistsMap.values()).filter(a => 

@@ -5,6 +5,12 @@
 (async function initializeFirebase() {
   try {
     const response = await fetch('/api/firebase-config');
+    if (!response.ok) {
+      console.warn('Firebase config endpoint not available, continuing without Firebase');
+      window.firebaseExports = null;
+      return;
+    }
+    
     const firebaseConfig = await response.json();
 
     // Initialize Firebase
@@ -26,7 +32,7 @@
       signOut: auth.signOut.bind(auth)
     };
   } catch (error) {
-    console.error('Failed to initialize Firebase:', error);
+    console.warn('Failed to initialize Firebase:', error);
     window.firebaseExports = null;
   }
 })();
