@@ -133,5 +133,20 @@
       "time_signature": "4/4",
       "duration_seconds": 171
     }
+  },
+  {
+    "song_id": "rec_0010",
+    "title": "Transistor",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1997,
+    "album_id": ["alb_0006"],
+    "genre_ids": ["gen_0001"],
+    "audio": {
+      "bpm": 75,
+      "key": "D major",
+      "time_signature": "4/4",
+      "duration_seconds": 182
+    }
   }
 ]

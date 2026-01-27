@@ -531,3 +531,35 @@ body {
 .danger-btn:hover {
   background-color: #7a2f44;
 }
+
+.album-type-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.filter-btn {
+  padding: 0.5rem 1rem;
+  background-color: #1e2230;
+  color: #9aa0b5;
+  border: 1px solid #3a4560;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.filter-btn:hover {
+  background-color: #2a3050;
+  color: #e6e6eb;
+  border-color: #5a7fd5;
+}
+
+.filter-btn.active {
+  background-color: #7a9ff5;
+  color: #ffffff;
+  border-color: #7a9ff5;
+  font-weight: 600;
+}

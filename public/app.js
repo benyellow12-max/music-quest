@@ -478,12 +478,33 @@ function showArtist(artist) {
     html += renderPlatformLinks(artistPlatforms);
 
     if (artistAlbums.length > 0) {
-      html += `<h3>Albums (${artistAlbums.length})</h3><div class="items-grid">`;
+      // Get unique album types and filter out undefined/empty
+      const albumTypes = [...new Set(artistAlbums
+        .map(a => a.type)
+        .filter(type => type && type.trim()))]
+        .sort();
+      
+      console.log('[showArtist] Album types found:', albumTypes, 'from albums:', artistAlbums.map(a => ({ title: a.title, type: a.type })));
+      
+      html += `<h3>Albums (${artistAlbums.length})</h3>`;
+      
+      // Add type filter buttons if there are multiple types
+      if (albumTypes.length > 1) {
+        html += `<div class="album-type-filters">
+          <button class="filter-btn active" onclick="window.filterAlbumsByType(null, 'artist')">All Types</button>`;
+        albumTypes.forEach(type => {
+          const count = artistAlbums.filter(a => a.type === type).length;
+          html += `<button class="filter-btn" onclick="window.filterAlbumsByType('${type}', 'artist')">${type} (${count})</button>`;
+        });
+        html += `</div>`;
+      }
+      
+      html += `<div class="items-grid" id="artist-albums-grid">`;
       artistAlbums.forEach((album, idx) => {
-        html += `<div class="item-card" onclick="window.showAlbumDirect(${idx}, 'artist')">
+        html += `<div class="item-card" onclick="window.showAlbumDirect(${idx}, 'artist')" data-album-type="${album.type || 'unknown'}">
           <img src="/images/album.png" alt="album">
           <div>${album.title}</div>
-          <div class="subtitle">${album.year}</div>
+          <div class="subtitle">${album.type || 'Unknown Type'} • ${album.year}</div>
         </div>`;
       });
       html += `</div>`;
@@ -1272,6 +1293,33 @@ window.showCollectionSong = (idx) => {
   if (window._collectionSongs && window._collectionSongs[idx]) {
     showSong(window._collectionSongs[idx]);
   }
+};
+
+window.filterAlbumsByType = (typeFilter, context) => {
+  const grid = document.getElementById('artist-albums-grid');
+  if (!grid) return;
+
+  const cards = grid.querySelectorAll('.item-card');
+  cards.forEach(card => {
+    const albumType = card.getAttribute('data-album-type');
+    if (typeFilter === null || albumType === typeFilter) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  // Update active button
+  const buttons = document.querySelectorAll('.filter-btn');
+  buttons.forEach(btn => {
+    if (typeFilter === null && btn.textContent.includes('All Types')) {
+      btn.classList.add('active');
+    } else if (typeFilter !== null && btn.textContent.startsWith(typeFilter)) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
 };
 
 async function showProfileTab() {
