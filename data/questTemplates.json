@@ -43,5 +43,23 @@
       "genreId": "gen_id",
       "artistId": "art_id"
     }
+  },
+  { 
+    "id": "qtpl_0006",
+    "type": "listen_between_time",
+    "description": "Listen to any song by {{artistId}} between {{startTime}} and {{endTime}}",
+    "params": {
+      "artistId": "art_id",
+      "startTime": "time",
+      "endTime": "time"
+    }
+  },
+  {
+    "id": "qtpl_0007",
+    "type": "travel_amount",
+    "description": "Travel to {{number}} places",
+    "params": {
+      "number": "number"
+    }
   }
 ]

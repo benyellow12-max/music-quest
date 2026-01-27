@@ -16,6 +16,12 @@
     "name": "Audiotree Live",
     "sort_name": "Audiotree Live",
     "notes": "Live music recording series"
+  },
+  {
+    "id": "art_0004",
+    "name": "Claude Debussy",
+    "sort_name": "Debussy, Claude",
+    "notes": "French composer"
   }
 ]
 

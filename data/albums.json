@@ -26,5 +26,12 @@
         "artistIds": ["art_0002"],
         "year": 2018,
         "recordingIds": ["rec_0004"]
+    },
+    {
+        "id": "alb_0005",
+        "title": "Suite Bergamasque",
+        "artistIds": ["art_0004"],
+        "year": 1905,
+        "recordingIds": ["rec_0007"]
     }
 ]

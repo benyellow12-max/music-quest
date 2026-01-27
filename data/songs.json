@@ -88,5 +88,20 @@
       "time_signature": "4/4",
       "duration_seconds": 221
     }
+  },
+  {
+    "song_id": "rec_0007",
+    "title": "Clair de Lune",
+    "variant": "Standard Version",
+    "artist_ids": ["art_0004"],
+    "year": 1905,
+    "album_id": ["alb_0005"],
+    "genre_ids": ["gen_0008"],
+    "audio": {
+      "bpm": 69,
+      "key": "Db major",
+      "time_signature": "9/8",
+      "duration_seconds": 300
+    }
   }
 ]

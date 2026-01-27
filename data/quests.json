@@ -82,5 +82,21 @@
       "type": "song",
       "entityId": "rec_0005"
     }
+  },
+  {
+    "id": "qst_0006",
+    "templateId": "qtpl_0007",
+    "params": {
+      "number": 15
+    },
+    "state": {
+      "status": "active",
+      "matchedRecordingIds": [],
+      "matchedRecordingIdsSet": {}
+    },
+    "reward": {
+      "type": "song",
+      "entityId": "rec_0006"
+    }
   }
 ]
