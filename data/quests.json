@@ -36,6 +36,7 @@
     "id": "qst_0003",
     "templateId": "qtpl_0004",
     "params": {
+      "requiredCount": 1,
       "startYear": 1990,
       "endYear": 1992,
       "artistId": "art_0001"
@@ -54,6 +55,7 @@
     "id": "qst_0004",
     "templateId": "qtpl_0004",
     "params": {
+      "requiredCount": 1,
       "startYear": 2014,
       "endYear": 2014
     },
@@ -68,8 +70,10 @@
     }
   },
   {
+    "id": "qst_0005",
     "templateId": "qtpl_0005",
     "params": {
+      "requiredCount": 1,
       "genreId": "gen_0002",
       "artistId": "art_0001"
     },
@@ -103,6 +107,8 @@
     "id": "qst_0007",
     "templateId": "qtpl_0006",
     "params": {
+      "requiredCount": 1,
+      "artistId": "art_0001",
       "startTime": "18:00",
       "endTime": "6:00"
     },

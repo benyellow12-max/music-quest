@@ -23,14 +23,22 @@
     window.firebaseExports = {
       auth,
       db,
-      doc: db.doc.bind(db),
-      getDoc: (docRef) => docRef.get(),
+      doc: (collectionPath, docId) => db.collection(collectionPath).doc(docId),
+      getDoc: async (docRef) => {
+        const snapshot = await docRef.get();
+        return {
+          exists: () => snapshot.exists,
+          data: () => snapshot.data()
+        };
+      },
       setDoc: (docRef, data) => docRef.set(data),
       googleProvider,
-      onAuthStateChanged: auth.onAuthStateChanged.bind(auth),
-      signInWithPopup: auth.signInWithPopup.bind(auth),
-      signOut: auth.signOut.bind(auth)
+      onAuthStateChanged: (callback) => auth.onAuthStateChanged(callback),
+      signInWithPopup: (provider) => auth.signInWithPopup(provider),
+      signOut: () => auth.signOut()
     };
+
+    console.log('Firebase initialized successfully');
   } catch (error) {
     console.warn('Failed to initialize Firebase:', error);
     window.firebaseExports = null;

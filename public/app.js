@@ -29,6 +29,7 @@ let allAlbums = [];
 let allSongs = [];
 let allPlatforms = [];
 let allGenres = [];
+let allQuestTemplates = [];
 let navigationHistory = [{ type: "home" }]; // Initialize with home page
 let dataLoaded = false;
 
@@ -67,13 +68,14 @@ if (document.readyState === 'loading') {
 }
 
 async function loadAllData() {
-  const [artistRes, albumRes, songRes, questRes, platformRes, genreRes] = await Promise.all([
+  const [artistRes, albumRes, songRes, questRes, platformRes, genreRes, templateRes] = await Promise.all([
     fetch("/artists"),
     fetch("/albums"),
     fetch("/songs"),
     fetch("/quests"),
     fetch("/platforms"),
-    fetch("/genres")
+    fetch("/genres"),
+    fetch("/quest-templates").catch(() => null)
   ]);
   allArtists = await artistRes.json();
   allAlbums = await albumRes.json();
@@ -81,13 +83,15 @@ async function loadAllData() {
   activeQuests = await questRes.json();
   allPlatforms = await platformRes.json();
   allGenres = await genreRes.json();
+  allQuestTemplates = templateRes ? await templateRes.json() : [];
   console.log("Data loaded:", { 
     artistCount: allArtists.length, 
     albumCount: allAlbums.length, 
     songCount: allSongs.length,
     questCount: activeQuests.length,
     platformCount: allPlatforms.length,
-    genreCount: allGenres.length
+    genreCount: allGenres.length,
+    templateCount: allQuestTemplates.length
   });
   dataLoaded = true;
 }
@@ -645,25 +649,44 @@ function showSong(song) {
     html += renderPlatformLinks(songPlatforms);
 
     html += `<div style="margin-top:1rem">
-      <button id="listen-btn" class="primary-btn">Mark as listened</button>
+      <button id="listen-btn" class="primary-btn">${currentUser ? 'Mark as listened' : 'Login to track progress'}</button>
+      <span id="listen-status" style="margin-left: 0.5rem; color: #9aa0b5;"></span>
     </div>`;
 
     if (rewardQuests.length > 0) {
-      html += `<h3>Rewarded By Quests (${rewardQuests.length})</h3><div class="quest-list-inline">`;
-      rewardQuests.forEach(quest => {
+      window._rewardQuests = rewardQuests;
+      html += `<div class="section-card"><h3>🎁 Rewards Quest (${rewardQuests.length})</h3><p class="muted">Unlocked by completing:</p><div class="quest-list-inline">`;
+      rewardQuests.forEach((quest, idx) => {
         const isCompleted = quest && quest.state && quest.state.status === 'completed';
-        html += `<div class="quest-item ${isCompleted ? 'completed' : ''}"><strong>${renderQuestTitle(quest)}</strong><br><span class="quest-status">${isCompleted ? '✓ Completed' : renderQuestProgress(quest)}</span></div>`;
+        const done = quest.state.matchedRecordingIds.length;
+        const total = quest.params.requiredCount || 1;
+        const progress = Math.round((done / total) * 100);
+        html += `<div class="quest-item ${isCompleted ? 'completed' : 'active'}" onclick="showQuest(window._rewardQuests[${idx}])">
+          <strong>${renderQuestTitle(quest)}</strong><br>
+          <div class="quest-mini-progress">
+            <div class="progress-fill" style="width: ${progress}%"></div>
+          </div>
+          <span class="quest-status">${isCompleted ? '✓ Completed' : `${done}/${total}`}</span>
+        </div>`;
       });
-      html += `</div>`;
+      html += `</div></div>`;
     }
 
     if (relatedQuests.length > 0) {
-      html += `<h3>Related Quests (${relatedQuests.length})</h3><div class="quest-list-inline">`;
-      relatedQuests.forEach(quest => {
+      window._relatedQuests = relatedQuests;
+      html += `<div class="section-card"><h3>⚡ Related Quests (${relatedQuests.length})</h3><p class="muted">Can advance by listening:</p><div class="quest-list-inline">`;
+      relatedQuests.forEach((quest, idx) => {
         const isMatched = quest && quest.state && quest.state.matchedRecordingIds && quest.state.matchedRecordingIds.includes(song.song_id);
-        html += `<div class="quest-item ${isMatched ? 'matched' : ''}"><strong>${renderQuestTitle(quest)}</strong><br><span class="quest-status">${isMatched ? '✓ Matched' : 'Can advance'}</span></div>`;
+        const done = quest.state.matchedRecordingIds.length;
+        const total = quest.params.requiredCount || 1;
+        const progress = Math.round((done / total) * 100);
+        html += `<div class="quest-item ${isMatched ? 'matched' : 'pending'}" onclick="showQuest(window._relatedQuests[${idx}])"><strong>${renderQuestTitle(quest)}</strong><br>
+          <div class="quest-mini-progress">
+            <div class="progress-fill" style="width: ${progress}%"></div>
+          </div>
+          <span class="quest-status">${isMatched ? '✓ Matched' : `${done}/${total}`}</span></div>`;
       });
-      html += `</div>`;
+      html += `</div></div>`;
     }
 
     if (song.audio) {
@@ -690,37 +713,63 @@ function showSong(song) {
 }
 
 async function markSongListened(song) {
-  try {
-    // Get Firebase auth token if user is logged in
-    let headers = { 'Content-Type': 'application/json' };
-    if (currentUser) {
-      const token = await currentUser.getIdToken();
-      headers['Authorization'] = `Bearer ${token}`;
+  const statusEl = document.getElementById('listen-status');
+  const setStatus = (msg) => {
+    if (statusEl) statusEl.textContent = msg;
+  };
+
+  // Check if user is logged in
+  if (!currentUser) {
+    const shouldLogin = confirm('You need to login to track your listening progress. Go to Profile tab to login?');
+    if (shouldLogin) {
+      showProfileTab();
     }
+    return;
+  }
+
+  try {
+    setStatus('Processing...');
+    
+    // Get Firebase auth token
+    const token = await currentUser.getIdToken();
     
     // POST to server to register listen
     const res = await fetch(`/listen/${encodeURIComponent(song.song_id)}`, { 
       method: 'POST',
-      headers 
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
     });
     
     if (!res.ok) {
       const errorText = await res.text();
       console.error('Failed to mark listened', errorText);
       if (res.status === 401) {
+        setStatus('Authentication failed');
         alert('Please login to track your listening progress');
+        showProfileTab();
+      } else {
+        setStatus('Failed to mark as listened');
+        alert('Failed to mark song as listened: ' + errorText);
       }
       return;
     }
     
+    setStatus('✓ Marked as listened!');
+    
     // Refresh quests in sidebar and in memory
     const qRes = await fetch('/quests');
     activeQuests = await qRes.json();
-    loadQuests();
+    await loadQuests();
+    
     // Re-render current song to reflect updated related/reward quests
-    showSong(song);
+    setTimeout(() => {
+      showSong(song);
+    }, 1000);
   } catch (err) {
     console.error('Error marking song listened:', err);
+    setStatus('Error occurred');
     alert('Failed to mark song as listened. Please try again.');
   }
 }
@@ -847,18 +896,29 @@ async function loadQuests() {
 
       if (quest.state.status === "completed") {
         card.classList.add("completed");
+      } else if (quest.state.status === "active") {
+        card.classList.add("active");
       }
+
+      const done = quest.state.matchedRecordingIds.length;
+      const total = quest.params.requiredCount || 1;
+      const progress = Math.round((done / total) * 100);
 
       const title = document.createElement("div");
       title.className = "quest-title";
       title.textContent = renderQuestTitle(quest);
 
-      const progress = document.createElement("div");
-      progress.className = "quest-progress";
-      progress.textContent = renderQuestProgress(quest);
+      const progressBar = document.createElement("div");
+      progressBar.className = "quest-progress-bar";
+      progressBar.innerHTML = `<div class="progress-fill" style="width: ${progress}%"></div>`;
+
+      const progressText = document.createElement("div");
+      progressText.className = "quest-progress-text";
+      progressText.textContent = renderQuestProgress(quest);
 
       card.appendChild(title);
-      card.appendChild(progress);
+      card.appendChild(progressBar);
+      card.appendChild(progressText);
 
       card.onclick = () => showQuest(quest);
       list.appendChild(card);
@@ -870,20 +930,103 @@ async function loadQuests() {
 
 function renderQuestTitle(quest) {
   const p = quest.params;
+  const template = allQuestTemplates.find(t => t.id === quest.templateId);
 
-  let parts = [];
+  let title = "";
 
-  if (p.artistId) {
-    const artist = allArtists.find(a => a && a.id === p.artistId);
-    const artistName = artist ? artist.name : p.artistId;
-    parts.push(`by ${artistName}`);
+  // Handle different quest types based on template
+  if (template) {
+    switch (template.type) {
+      case 'listen_count':
+        const count = p.requiredCount || 1;
+        title = `Listen to ${count} song${count > 1 ? 's' : ''}`;
+        if (p.artistId) {
+          const artist = allArtists.find(a => a && a.id === p.artistId);
+          title += ` by ${artist ? artist.name : p.artistId}`;
+        }
+        break;
+      
+      case 'listen_by_year':
+        const reqCount = p.requiredCount || 1;
+        title = `Listen to ${reqCount} song${reqCount > 1 ? 's' : ''}`;
+        if (p.artistId) {
+          const artist = allArtists.find(a => a && a.id === p.artistId);
+          title += ` by ${artist ? artist.name : p.artistId}`;
+        }
+        if (p.startYear !== undefined && p.endYear !== undefined) {
+          title += ` (${p.startYear}–${p.endYear})`;
+        }
+        break;
+      
+      case 'listen_by_genre':
+        const genreCount = p.requiredCount || 1;
+        title = `Listen to ${genreCount} song${genreCount > 1 ? 's' : ''}`;
+        if (p.genreId) {
+          const genre = allGenres.find(g => g && g.id === p.genreId);
+          if (genre) {
+            title += ` in ${genre.name}`;
+          }
+        }
+        if (p.artistId) {
+          const artist = allArtists.find(a => a && a.id === p.artistId);
+          title += ` by ${artist ? artist.name : p.artistId}`;
+        }
+        break;
+      
+      case 'listen_between_time':
+        const timeCount = p.requiredCount || 1;
+        title = `Listen to ${timeCount} song${timeCount > 1 ? 's' : ''}`;
+        if (p.artistId) {
+          const artist = allArtists.find(a => a && a.id === p.artistId);
+          title += ` by ${artist ? artist.name : p.artistId}`;
+        }
+        if (p.startTime && p.endTime) {
+          title += ` (${p.startTime}–${p.endTime})`;
+        }
+        break;
+      
+      case 'travel_amount':
+        title = `Travel to ${p.number || 1} place${(p.number || 1) > 1 ? 's' : ''}`;
+        break;
+      
+      case 'listen_to_album':
+        const albumSongs = p.songs || 1;
+        title = `Listen to ${albumSongs} song${albumSongs > 1 ? 's' : ''}`;
+        if (p.albumId) {
+          const album = allAlbums.find(a => a && a.id === p.albumId);
+          if (album) {
+            title += ` from ${album.title}`;
+          }
+        }
+        if (p.artistId) {
+          const artist = allArtists.find(a => a && a.id === p.artistId);
+          title += ` by ${artist ? artist.name : p.artistId}`;
+        }
+        break;
+      
+      default:
+        // Fallback for unknown types
+        if (p.requiredCount) {
+          title = `Listen to ${p.requiredCount} song${p.requiredCount > 1 ? 's' : ''}`;
+        } else {
+          title = "Complete quest";
+        }
+        if (p.artistId) {
+          const artist = allArtists.find(a => a && a.id === p.artistId);
+          title += ` by ${artist ? artist.name : p.artistId}`;
+        }
+    }
+  } else {
+    // Fallback if template not found
+    const fallbackCount = p.requiredCount || 1;
+    title = `Listen to ${fallbackCount} song${fallbackCount > 1 ? 's' : ''}`;
+    if (p.artistId) {
+      const artist = allArtists.find(a => a && a.id === p.artistId);
+      title += ` by ${artist ? artist.name : p.artistId}`;
+    }
   }
 
-  if (p.startYear !== undefined && p.endYear !== undefined) {
-    parts.push(`(${p.startYear}–${p.endYear})`);
-  }
-
-  return `Listen to ${p.requiredCount || 1} song${(p.requiredCount || 1) > 1 ? "s" : ""} ${parts.join(" ")}`;
+  return title;
 }
 
 function renderQuestProgress(quest) {
@@ -898,16 +1041,44 @@ function renderQuestProgress(quest) {
 function showQuest(quest) {
   const p = quest.params;
   const questArtist = p.artistId ? allArtists.find(a => a && a.id === p.artistId) : null;
+  const template = allQuestTemplates.find(t => t.id === quest.templateId);
+  
+  const done = quest.state.matchedRecordingIds.length;
+  const total = quest.params.requiredCount || 1;
+  const progress = Math.round((done / total) * 100);
   
   let html = `
     <h1>${renderQuestTitle(quest)}</h1>
-    <p>Status: <strong>${quest.state.status}</strong></p>
-    <p>Progress: ${renderQuestProgress(quest)}</p>
+    <div class="quest-detail-header">
+      <div class="status-badge ${quest.state.status}">${quest.state.status === 'completed' ? '✓ Completed' : quest.state.status === 'active' ? '⚡ Active' : quest.state.status}</div>
+    </div>
+    
+    <div class="quest-progress-container">
+      <div class="progress-bar-large">
+        <div class="progress-fill" style="width: ${progress}%"></div>
+      </div>
+      <p class="progress-info">${done} of ${total} songs completed</p>
+    </div>
   `;
+  
+  if (template) {
+    html += `<p class="quest-template-type"><strong>Quest Type:</strong> ${template.type.replace(/_/g, ' ')}</p>`;
+  }
   
   if (questArtist) {
     html += `<p><strong>Artist:</strong> <span class="link" onclick="showArtist(window._questArtist)">${questArtist.name}</span></p>`;
     window._questArtist = questArtist;
+  }
+  
+  if (p.startYear !== undefined && p.endYear !== undefined) {
+    html += `<p><strong>Time Period:</strong> ${p.startYear}–${p.endYear}</p>`;
+  }
+  
+  if (p.genreId) {
+    const genre = allGenres.find(g => g && g.id === p.genreId);
+    if (genre) {
+      html += `<p><strong>Genre:</strong> ${genre.name}</p>`;
+    }
   }
 
   if (quest.reward && quest.reward.type === 'song' && quest.reward.entityId) {
@@ -929,6 +1100,29 @@ function showQuest(quest) {
       
       window._questRewardSong = rewardSong;
     }
+  }
+  
+  // Show matched songs
+  if (quest.state.matchedRecordingIds.length > 0) {
+    html += `<h3>Matched Songs (${quest.state.matchedRecordingIds.length})</h3><div class="items-list">`;
+    quest.state.matchedRecordingIds.forEach(songId => {
+      const song = allSongs.find(s => s && s.song_id === songId);
+      if (song) {
+        const songArtists = (song.artist_ids && Array.isArray(song.artist_ids)) ? song.artist_ids.map(id => (allArtists || []).find(a => a && a.id === id)).filter(Boolean) : [];
+        const artistNames = songArtists.map(a => a.name).join(", ");
+        html += `<div class="list-item" onclick="showSong(window._matchedSongs['${songId}'])">
+          <img src="/images/song.png" alt="song">
+          <div class="item-info">
+            <div>${song.title || 'Unknown'}</div>
+            <div class="subtitle">${artistNames} • ${song.variant || 'Unknown'} • ${song.year}</div>
+          </div>
+          <div class="matched-indicator">✓</div>
+        </div>`;
+        window._matchedSongs = window._matchedSongs || {};
+        window._matchedSongs[songId] = song;
+      }
+    });
+    html += `</div>`;
   }
 
   getMainContent().innerHTML = html;
@@ -1110,7 +1304,7 @@ async function showProfileTab() {
 
   if (isLoggedIn) {
     try {
-      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      const userDoc = await getDoc(doc('users', currentUser.uid));
       const userData = userDoc.exists() ? userDoc.data() : {};
       
       const el = document.getElementById('profile-content');
@@ -1150,24 +1344,41 @@ async function showProfileTab() {
   if (loginBtn) {
     loginBtn.onclick = async () => {
       try {
+        // Check if Firebase is initialized
+        if (!window.firebaseExports || !auth || !googleProvider) {
+          alert('Firebase authentication is not initialized. Please refresh the page and try again.');
+          console.error('Firebase not initialized:', { 
+            firebaseExports: !!window.firebaseExports, 
+            auth: !!auth, 
+            googleProvider: !!googleProvider 
+          });
+          return;
+        }
+
         const result = await signInWithPopup(auth, googleProvider);
         currentUser = result.user;
         
         // Create user document if it doesn't exist
-        const userRef = doc(db, 'users', result.user.uid);
-        const userDoc = await getDoc(userRef);
-        if (!userDoc.exists()) {
-          await setDoc(userRef, {
-            email: result.user.email,
-            displayName: result.user.displayName,
-            createdAt: new Date(),
-            providers: []
-          });
+        if (db && doc && getDoc && setDoc) {
+          const userRef = doc('users', result.user.uid);
+          const userDoc = await getDoc(userRef);
+          if (!userDoc.exists()) {
+            await setDoc(userRef, {
+              email: result.user.email,
+              displayName: result.user.displayName,
+              createdAt: new Date(),
+              providers: []
+            });
+          }
         }
         
         showProfileTab();
       } catch (err) {
         console.error('Login failed:', err);
+        if (err.code === 'auth/popup-closed-by-user') {
+          // User closed the popup, don't show error
+          return;
+        }
         alert('Login failed: ' + err.message);
       }
     };
