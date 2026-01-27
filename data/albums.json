@@ -18,7 +18,7 @@
         "title": "Archive",
         "artistIds": ["art_0001"],
         "year": 2015,
-        "recordingIds": ["rec_0003"]
+        "recordingIds": ["rec_0008", "rec_0003"]
     },
     {
         "id": "alb_0004",
@@ -33,5 +33,12 @@
         "artistIds": ["art_0004"],
         "year": 1905,
         "recordingIds": ["rec_0007"]
+    },
+    {
+        "id": "alb_0006",
+        "title": "Transistor",
+        "artistIds": ["art_0001"],
+        "year": 1997,
+        "recordingIds": ["rec_0009"]
     }
 ]

@@ -61,5 +61,15 @@
     "params": {
       "number": "number"
     }
+  },
+  {
+    "id": "qtpl_0008",
+    "type": "listen_to_album",
+    "description": "Listen to {{songs}} songs the album {{albumId}} by {{artistId}}",
+    "params": {
+      "songs": "number",
+      "albumId": "alb_id",
+      "artistId": "art_id"
+    }
   }
 ]

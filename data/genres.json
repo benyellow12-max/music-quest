@@ -33,5 +33,15 @@
     "id": "gen_0007",
     "name": "Contemporary Folk",
     "parentId": null
+  },
+  {
+    "id": "gen_0008",
+    "name": "Classical",
+    "parentId": null
+  },
+  {
+    "id": "gen_0009",
+    "name": "Live",
+    "parentId": null
   }
   ]

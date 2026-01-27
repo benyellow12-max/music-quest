@@ -103,5 +103,35 @@
       "time_signature": "9/8",
       "duration_seconds": 300
     }
+  },
+  {
+    "song_id": "rec_0008",
+    "title": "Transistor Intro",
+    "variant": "Secret Version",
+    "artist_ids": ["art_0001"],
+    "year": 1997,
+    "album_id": ["alb_0003"],
+    "genre_ids": ["gen_0001"],
+    "audio": {
+      "bpm": 128,
+      "key": "A major",
+      "time_signature": "4/4",
+      "duration_seconds": 101
+    }
+  },
+  {
+    "song_id": "rec_0009",
+    "title": "Prisoner",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1997,
+    "album_id": ["alb_0006"],
+    "genre_ids": ["gen_0001"],
+    "audio": {
+      "bpm": 170,
+      "key": "C major",
+      "time_signature": "4/4",
+      "duration_seconds": 171
+    }
   }
 ]

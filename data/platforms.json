@@ -37,5 +37,13 @@
     "platform": "youtube",
     "url": "https://www.youtube.com/watch?v=GfDSc-nN6C8",
     "notes": "Hydroponic version"
-  }
+  },
+  {
+  "id": "plat_0006",
+  "entityType": "recording",
+  "entityId": "rec_0008",
+  "platform": "youtube",
+  "url": "https://www.youtube.com/watch?v=lyx4kiW8S4k",
+  "notes": "Secret version"
+}
 ]
