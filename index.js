@@ -382,10 +382,11 @@ app.get("/search", (req, res) => {
   const q = qRaw.toLowerCase();
 
   if (!q) {
-    // Return all artists and albums when query is empty
+    // Return all artists, albums, and genres when query is empty
     return res.json({ 
       artists: Array.from(artistsMap.values()),
       albums: Array.from(albumsMap.values()),
+      genres: genres,
       songs: []
     });
   }
@@ -402,7 +403,11 @@ app.get("/search", (req, res) => {
     s.title.toLowerCase().includes(q)
   );
 
-  res.json({ artists: searchArtists, albums: searchAlbums, songs: searchSongs });
+  const searchGenres = genres.filter(g =>
+    g.name.toLowerCase().includes(q)
+  );
+
+  res.json({ artists: searchArtists, albums: searchAlbums, genres: searchGenres, songs: searchSongs });
 });
 
 // Developer utilities

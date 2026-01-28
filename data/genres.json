@@ -2,11 +2,12 @@
   {
     "id": "gen_0001",
     "name": "Rock",
-    "parentId": null
+    "parentId": null,
+    "rootId": ["gen_0017", "gen_0018", "gen_0019"]
   },
   {
     "id": "gen_0002",
-    "name": "Hip Hop",
+    "name": "Hip Hop/Rap",
     "parentId": null
   },
   {
@@ -42,6 +43,73 @@
   {
     "id": "gen_0009",
     "name": "Live",
+    "parentId": null
+  },
+  {
+    "id": "gen_0010",
+    "name": "Omaha Stylee",
+    "parentId": ["gen_0011"],
+    "rootId": ["gen_0011", "gen_0002", "gen_0003", "gen_0004", "gen_0015"]
+  },
+  {
+    "id": "gen_0011",
+    "name": "Alternative Rock",
+    "parentId": "gen_0001"
+  },
+  {
+    "id": "gen_0012",
+    "name": "Electronic",
+    "parentId": null
+  },
+  {
+    "id": "gen_0013",
+    "name": "Jazz",
+    "parentId": null
+  },
+  {
+    "id": "gen_0014",
+    "name": "Blues",
+    "parentId": null
+  },
+  {
+    "id": "gen_0015",
+    "name": "Reggae",
+    "parentId": null
+  },
+  {
+    "id": "gen_0016",
+    "name": "Country",
+    "parentId": null
+  },
+  {
+    "id": "gen_0017",
+    "name": "Electric Blues",
+    "parentId": "gen_0014"
+  },
+  {
+    "id": "gen_0018",
+    "name": "Outlaw Country",
+    "parentId": "gen_0016"
+  },
+  {
+    "id": "gen_0019",
+    "name": "Rhythm and Blues",
+    "parentId": null,
+    "rootId": ["gen_0013", "gen_0014"]
+  },
+  {
+    "id": "gen_0020",
+    "name": "Gospel",
+    "parentId": "gen_0021"
+  },
+  {
+    "id": "gen_0021",
+    "name": "Religious",
+    "parentId": null
+  },
+  {
+    "id": "gen_0022",
+    "name": "Traditional/Folk",
     "parentId": null
   }
   ]

@@ -294,7 +294,14 @@ function setupSearchListener() {
       searchAbortController = new AbortController();
       const res = await fetch(`/search?q=`, { signal: searchAbortController.signal });
       const data = await res.json();
-      renderResults(data);
+      // Show featured content instead of all results when search is empty
+      const noSearchView = document.getElementById('no-search-view');
+      if (noSearchView) {
+        noSearchView.style.display = '';
+        results.innerHTML = '';
+      } else {
+        renderResults(data);
+      }
     } catch (err) {
       if (err.name !== 'AbortError') {
         console.error('Search error', err);
@@ -343,9 +350,9 @@ function setupSearchListener() {
   }
 }
 
-setupSearchListener();
+// Note: setupSearchListener is called from showSearchTab when ready
 
-console.log('[app.js] setupSearchListener completed');
+console.log('[app.js] Search setup functions loaded');
 
 // Reusable DOM template fragments for search results
 const resultTemplates = {
@@ -366,17 +373,29 @@ const resultTemplates = {
     div.className = "result-item";
     div.innerHTML = `<img src="/images/song.png" alt="song"><div><div>${item.title}</div></div>`;
     return div;
+  },
+  createGenreItem: (item, idx) => {
+    const div = document.createElement("div");
+    div.className = "result-item";
+    div.innerHTML = `<img src="/images/genre.png" alt="genre"><div><div>${item.name}</div></div>`;
+    return div;
   }
 };
 
-function renderResults({ artists, albums, songs }) {
+function renderResults({ artists, albums, songs, genres }) {
   const results = document.getElementById("results");
   if (!results) return;
   
   results.innerHTML = "";
   
+  // Hide featured content when showing results
+  const noSearchView = document.getElementById("no-search-view");
+  if (noSearchView) {
+    noSearchView.style.display = "none";
+  }
+  
   // Store search context for onclick handlers
-  window._searchResults = { artists, albums, songs };
+  window._searchResults = { artists, albums, songs, genres };
 
   if (artists && artists.length > 0) {
     const group = document.createElement("div");
@@ -406,15 +425,15 @@ function renderResults({ artists, albums, songs }) {
     results.appendChild(group);
   }
 
-  if (songs && songs.length > 0) {
+  if (genres && genres.length > 0) {
     const group = document.createElement("div");
     group.className = "result-group";
     const h3 = document.createElement("h3");
-    h3.textContent = "Songs";
+    h3.textContent = "Genres";
     group.appendChild(h3);
-    songs.forEach((item, idx) => {
-      const div = resultTemplates.createSongItem(item, idx);
-      div.onclick = () => showSong(window._searchResults.songs[idx]);
+    genres.forEach((item, idx) => {
+      const div = resultTemplates.createGenreItem(item, idx);
+      div.onclick = () => showGenre(window._searchResults.genres[idx]);
       group.appendChild(div);
     });
     results.appendChild(group);
@@ -850,6 +869,20 @@ function showGenre(genre) {
 
     const genreSongs = (allSongs || []).filter(s => s && s.genre_ids && Array.isArray(s.genre_ids) && s.genre_ids.includes(genre.id));
     const subgenres = (allGenres || []).filter(g => g && g.parentId === genre.id);
+    
+    // Find root genres (genres this one is descended from)
+    const rootGenres = genre.rootId 
+      ? (Array.isArray(genre.rootId) ? genre.rootId : [genre.rootId])
+          .map(id => (allGenres || []).find(g => g && g.id === id))
+          .filter(Boolean)
+      : [];
+    
+    // Find descendant genres (genres that list this one as a root)
+    const descendantGenres = (allGenres || []).filter(g => {
+      if (!g || !g.rootId) return false;
+      const roots = Array.isArray(g.rootId) ? g.rootId : [g.rootId];
+      return roots.includes(genre.id);
+    });
 
     let html = `<h1>${genre.name}</h1>`;
     
@@ -858,6 +891,35 @@ function showGenre(genre) {
       if (parentGenre) {
         html += `<p><strong>Parent Genre:</strong> <span class="link" onclick="showGenre(${JSON.stringify(parentGenre).replace(/"/g, '&quot;')})">${parentGenre.name}</span></p>`;
       }
+    }
+
+    // Display root genres (ancestral genres)
+    if (rootGenres.length > 0) {
+      html += `<div class="section-card"><h3>🌳 Root Genres</h3><p class="muted">This genre descended from:</p><div class="items-list">`;
+      rootGenres.forEach(rootGenre => {
+        html += `<div class="list-item" onclick="showGenre(${JSON.stringify(rootGenre).replace(/"/g, '&quot;')})">
+          <div class="item-info">
+            <div>${rootGenre.name}</div>
+            <div class="subtitle">Ancestral genre</div>
+          </div>
+        </div>`;
+      });
+      html += `</div></div>`;
+    }
+
+    // Display descendant genres
+    if (descendantGenres.length > 0) {
+      html += `<div class="section-card"><h3>🌿 Descendant Genres</h3><p class="muted">Genres descended from this:</p><div class="items-list">`;
+      descendantGenres.forEach(descGenre => {
+        const descSongCount = (allSongs || []).filter(s => s && s.genre_ids && Array.isArray(s.genre_ids) && s.genre_ids.includes(descGenre.id)).length;
+        html += `<div class="list-item" onclick="showGenre(${JSON.stringify(descGenre).replace(/"/g, '&quot;')})">
+          <div class="item-info">
+            <div>${descGenre.name}</div>
+            <div class="subtitle">${descSongCount} song${descSongCount !== 1 ? 's' : ''}</div>
+          </div>
+        </div>`;
+      });
+      html += `</div></div>`;
     }
 
     if (subgenres.length > 0) {
@@ -1159,6 +1221,101 @@ function showQuest(quest) {
   updateBackButton();
 }
 
+// Color theme system
+const colorThemes = {
+  default: { primary: '#6b8fff' },
+  purple: { primary: '#a78bfa' },
+  green: { primary: '#10b981' },
+  orange: { primary: '#f59e0b' },
+  pink: { primary: '#ec4899' },
+  cyan: { primary: '#06b6d4' }
+};
+
+function applyColorTheme(themeName = 'default') {
+  const theme = colorThemes[themeName] || colorThemes.default;
+  const root = document.documentElement;
+  
+  // Apply the color theme
+  root.style.setProperty('--accent-primary', theme.primary);
+}
+
+function initializeTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  const savedColorTheme = localStorage.getItem('colorTheme') || 'default';
+  
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  applyColorTheme(savedColorTheme);
+}
+
+// Initialize theme on load
+initializeTheme();
+
+function setupSearchFilters() {
+  const filterBtns = document.querySelectorAll('[data-filter]');
+  
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const filter = btn.dataset.filter;
+      
+      // Update active state
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      // Filter results
+      filterResultsByType(filter);
+    });
+  });
+}
+
+function filterResultsByType(filter) {
+  const groups = document.querySelectorAll('.result-group');
+  
+  groups.forEach(group => {
+    const h3 = group.querySelector('h3');
+    const typeText = h3 ? h3.textContent.toLowerCase() : '';
+    
+    if (filter === 'all') {
+      // Show all groups
+      group.style.display = '';
+    } else if (filter === 'artists' && typeText === 'artists') {
+      group.style.display = '';
+    } else if (filter === 'genres' && typeText === 'genres') {
+      group.style.display = '';
+    } else if (filter === 'albums' && typeText === 'albums') {
+      group.style.display = '';
+    } else {
+      // Hide groups that don't match
+      group.style.display = 'none';
+    }
+  });
+}
+
+function loadFeaturedContent() {
+  // Load featured genres
+  const featuredGenresDiv = document.getElementById('featured-genres');
+  if (featuredGenresDiv && allGenres.length > 0) {
+    const featured = allGenres.slice(0, 6);
+    featuredGenresDiv.innerHTML = featured.map(genre => `
+      <div class="featured-card" onclick="showGenre(${JSON.stringify(genre).replace(/"/g, '&quot;')})">
+        <div class="featured-card-icon">🎵</div>
+        <div class="featured-card-name">${genre.name}</div>
+      </div>
+    `).join('');
+  }
+
+  // Load featured artists
+  const featuredArtistsDiv = document.getElementById('featured-artists');
+  if (featuredArtistsDiv && allArtists.length > 0) {
+    const featured = allArtists.slice(0, 6);
+    featuredArtistsDiv.innerHTML = featured.map(artist => `
+      <div class="featured-card" onclick="showArtist(${JSON.stringify(artist).replace(/"/g, '&quot;')})">
+        <div class="featured-card-icon">🎤</div>
+        <div class="featured-card-name">${artist.name}</div>
+      </div>
+    `).join('');
+  }
+}
+
 function goBack() {
   console.log('[goBack] called, navigationHistory length:', navigationHistory.length);
   if (navigationHistory.length <= 1) return;
@@ -1188,22 +1345,16 @@ function goBack() {
   } else if (previous.type === "profile") {
     showProfileTab();
   } else if (previous.type === "home") {
-    getMainContent().innerHTML = `
-      <h1>Music Quest</h1>
-      <p>Select a quest or explore the catalog.</p>
-
-      <div id="search">
-        <input
-          id="search-input"
-          type="text"
-          placeholder="Search artists, albums, or songs..."
-        />
-      </div>
-
-      <div id="results"></div>
-    `;
-    setupSearchListener();
-    updateBackButton();
+    showSearchTab();
+  } else if (previous.type === "artists-page") {
+    navigationHistory.pop();
+    showArtistsPage();
+  } else if (previous.type === "albums-page") {
+    navigationHistory.pop();
+    showAlbumsPage();
+  } else if (previous.type === "genres-page") {
+    navigationHistory.pop();
+    showGenresPage();
   }
 }
 
@@ -1226,23 +1377,274 @@ function showSearchTab() {
   tabs[0].classList.add('active');
   
   getMainContent().innerHTML = `
-    <h1>Music Quest</h1>
-    <p>Select a quest or explore the catalog.</p>
+    <div class="search-header">
+      <h1>MUSIC QUEST</h1>
+      <p>EXPLORE YOUR CATALOG</p>
+    </div>
 
-    <div id="search">
+    <nav class="page-nav">
+      <button class="nav-link" onclick="showArtistsPage()">ARTISTS</button>
+      <button class="nav-link" onclick="showAlbumsPage()">ALBUMS</button>
+      <button class="nav-link" onclick="showGenresPage()">GENRES</button>
+    </nav>
+
+    <div id="search" class="search-container">
       <input
         id="search-input"
         type="text"
-        placeholder="Search artists, albums, or songs..."
+        placeholder="Search everything..."
       />
     </div>
 
     <div id="results"></div>
+
+    <div id="no-search-view" class="no-search-view">
+      <div class="featured-section">
+        <h2>POPULAR GENRES</h2>
+        <div id="featured-genres" class="featured-grid"></div>
+      </div>
+      <div class="featured-section">
+        <h2>FEATURED ARTISTS</h2>
+        <div id="featured-artists" class="featured-grid"></div>
+      </div>
+    </div>
   `;
-  
+
   setupSearchListener();
+  loadFeaturedContent();
   navigationHistory = [{ type: "home" }];
   updateBackButton();
+}
+
+function showArtistsPage() {
+  getMainContent().innerHTML = `
+    <div class="page-header">
+      <h1>ARTISTS</h1>
+    </div>
+
+    <nav class="page-nav">
+      <button class="nav-link" onclick="showSearchTab()">HOME</button>
+      <button class="nav-link active">ARTISTS</button>
+      <button class="nav-link" onclick="showAlbumsPage()">ALBUMS</button>
+      <button class="nav-link" onclick="showGenresPage()">GENRES</button>
+    </nav>
+
+    <div id="search" class="search-container">
+      <input
+        id="artists-search-input"
+        type="text"
+        placeholder="Search artists..."
+      />
+    </div>
+
+    <div id="artists-results" class="items-list"></div>
+  `;
+
+  setupArtistsSearch();
+  renderAllArtists();
+  navigationHistory.push({ type: "artists-page" });
+  updateBackButton();
+}
+
+function showAlbumsPage() {
+  getMainContent().innerHTML = `
+    <div class="page-header">
+      <h1>ALBUMS</h1>
+    </div>
+
+    <nav class="page-nav">
+      <button class="nav-link" onclick="showSearchTab()">HOME</button>
+      <button class="nav-link" onclick="showArtistsPage()">ARTISTS</button>
+      <button class="nav-link active">ALBUMS</button>
+      <button class="nav-link" onclick="showGenresPage()">GENRES</button>
+    </nav>
+
+    <div id="search" class="search-container">
+      <input
+        id="albums-search-input"
+        type="text"
+        placeholder="Search albums..."
+      />
+    </div>
+
+    <div id="albums-results" class="items-list"></div>
+  `;
+
+  setupAlbumsSearch();
+  renderAllAlbums();
+  navigationHistory.push({ type: "albums-page" });
+  updateBackButton();
+}
+
+function showGenresPage() {
+  getMainContent().innerHTML = `
+    <div class="page-header">
+      <h1>GENRES</h1>
+    </div>
+
+    <nav class="page-nav">
+      <button class="nav-link" onclick="showSearchTab()">HOME</button>
+      <button class="nav-link" onclick="showArtistsPage()">ARTISTS</button>
+      <button class="nav-link" onclick="showAlbumsPage()">ALBUMS</button>
+      <button class="nav-link active">GENRES</button>
+    </nav>
+
+    <div id="search" class="search-container">
+      <input
+        id="genres-search-input"
+        type="text"
+        placeholder="Search genres..."
+      />
+    </div>
+
+    <div id="genres-results" class="items-list"></div>
+  `;
+
+  setupGenresSearch();
+  renderAllGenres();
+  navigationHistory.push({ type: "genres-page" });
+  updateBackButton();
+}
+
+function setupArtistsSearch() {
+  const input = document.getElementById('artists-search-input');
+  if (!input) return;
+
+  input.addEventListener('input', () => {
+    const query = input.value.toLowerCase().trim();
+    if (!query) {
+      renderAllArtists();
+    } else {
+      const filtered = allArtists.filter(a => a.name.toLowerCase().includes(query));
+      renderArtistsList(filtered);
+    }
+  });
+}
+
+function setupAlbumsSearch() {
+  const input = document.getElementById('albums-search-input');
+  if (!input) return;
+
+  input.addEventListener('input', () => {
+    const query = input.value.toLowerCase().trim();
+    if (!query) {
+      renderAllAlbums();
+    } else {
+      const filtered = allAlbums.filter(a => a.title.toLowerCase().includes(query));
+      renderAlbumsList(filtered);
+    }
+  });
+}
+
+function setupGenresSearch() {
+  const input = document.getElementById('genres-search-input');
+  if (!input) return;
+
+  input.addEventListener('input', () => {
+    const query = input.value.toLowerCase().trim();
+    if (!query) {
+      renderAllGenres();
+    } else {
+      const filtered = allGenres.filter(g => g.name.toLowerCase().includes(query));
+      renderGenresList(filtered);
+    }
+  });
+}
+
+function renderAllArtists() {
+  renderArtistsList(allArtists);
+}
+
+function renderArtistsList(artists) {
+  const container = document.getElementById('artists-results');
+  if (!container) return;
+
+  if (artists.length === 0) {
+    container.innerHTML = '<p class="no-results">NO ARTISTS FOUND</p>';
+    return;
+  }
+
+  // Sort by sort_name
+  const sortedArtists = [...artists].sort((a, b) => {
+    const nameA = (a.sort_name || a.name || '').toUpperCase();
+    const nameB = (b.sort_name || b.name || '').toUpperCase();
+    return nameA.localeCompare(nameB);
+  });
+
+  container.innerHTML = sortedArtists.map((artist, idx) => `
+    <div class="list-item" onclick="showArtist(${JSON.stringify(artist).replace(/"/g, '&quot;')})">
+      <img src="/images/artist.png" alt="artist">
+      <div class="item-info">
+        <div>${artist.name}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderAllAlbums() {
+  renderAlbumsList(allAlbums);
+}
+
+function renderAlbumsList(albums) {
+  const container = document.getElementById('albums-results');
+  if (!container) return;
+
+  if (albums.length === 0) {
+    container.innerHTML = '<p class="no-results">NO ALBUMS FOUND</p>';
+    return;
+  }
+
+  container.innerHTML = albums.map((album, idx) => {
+    // Handle artistIds (camelCase) which is the actual field name in albums.json
+    let artistName = 'Unknown Artist';
+    if (album.artistIds && album.artistIds.length > 0) {
+      const artists = album.artistIds.map(id => allArtists.find(a => a.id === id)).filter(a => a);
+      if (artists.length > 0) {
+        artistName = artists.map(a => a.name).join(', ');
+      }
+    }
+    return `
+      <div class="list-item" onclick="showAlbum(${JSON.stringify(album).replace(/"/g, '&quot;')})">
+        <img src="/images/album.png" alt="album">
+        <div class="item-info">
+          <div>${album.title}</div>
+          <div class="subtitle">${artistName}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderAllGenres() {
+  renderGenresList(allGenres);
+}
+
+function renderGenresList(genres) {
+  const container = document.getElementById('genres-results');
+  if (!container) return;
+
+  if (genres.length === 0) {
+    container.innerHTML = '<p class="no-results">NO GENRES FOUND</p>';
+    return;
+  }
+
+  container.innerHTML = genres.map((genre, idx) => {
+    // Count songs that have this genre in genre_ids array OR as single genre_id
+    const songCount = allSongs.filter(s => {
+      if (s.genre_ids && s.genre_ids.includes(genre.id)) return true;
+      if (s.genre_id === genre.id) return true;
+      return false;
+    }).length;
+    return `
+      <div class="list-item" onclick="showGenre(${JSON.stringify(genre).replace(/"/g, '&quot;')})">
+        <img src="/images/genre.png" alt="genre">
+        <div class="item-info">
+          <div>${genre.name}</div>
+          <div class="subtitle">${songCount} song${songCount !== 1 ? 's' : ''}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function showCollectionTab() {
@@ -1331,27 +1733,14 @@ async function showProfileTab() {
 
   getMainContent().innerHTML = `
     <h1>Your Profile</h1>
-    <div style="margin: 0.5rem 0 1rem 0">
+    <div style="margin: 0.5rem 0 1.5rem 0; display: flex; gap: 0.75rem; flex-wrap: wrap;">
       ${isLoggedIn 
         ? `<button id="logout-btn" class="primary-btn">Logout</button>`
         : `<button id="login-btn" class="primary-btn">Login with Google</button>`
       }
+      <button id="settings-btn" class="secondary-btn">⚙️ Settings</button>
     </div>
     <div id="profile-content">${isLoggedIn ? '<p>Loading...</p>' : '<p><em>Please login to view your profile</em></p>'}</div>
-    <div class="section-card">
-      <h3>Clear stored memory</h3>
-      <p class="muted">Clears local storage (preferences, cached settings, etc.).</p>
-      <div class="button-row">
-        <button id="clear-memory-btn" class="danger-btn">Clear memory</button>
-        <span id="clear-memory-status" class="muted"></span>
-      </div>
-    </div>
-    <div class="section-card">
-      <h3>Developer mode</h3>
-      <p class="muted">Show tools to erase caches and audit songs without quests.</p>
-      <button id="developer-toggle-btn" class="primary-btn">${developerModeEnabled ? 'Disable developer mode' : 'Enable developer mode'}</button>
-      <p class="muted" style="margin-top: 0.35rem;">${developerModeEnabled ? 'Developer tab is visible in the bottom bar.' : 'Enable to reveal the developer tab.'}</p>
-    </div>
   `;
 
   if (isLoggedIn) {
@@ -1476,26 +1865,117 @@ async function showProfileTab() {
     };
   }
 
-  const developerToggleBtn = document.getElementById('developer-toggle-btn');
-  if (developerToggleBtn) {
-    developerToggleBtn.onclick = () => {
-      const next = !developerModeEnabled;
-      setDeveloperMode(next);
-
-      // If the developer tab was active and we just disabled it, return to Search
-      const devTabButton = document.getElementById('dev-tab-btn');
-      if (!next && devTabButton && devTabButton.classList.contains('active')) {
-        showSearchTab();
-      }
-
-      showProfileTab();
-    };
+  const settingsBtn = document.getElementById('settings-btn');
+  if (settingsBtn) {
+    settingsBtn.onclick = showSettingsModal;
   }
+}
 
-  const clearMemoryBtn = document.getElementById('clear-memory-btn');
+function showSettingsModal() {
+  const currentTheme = localStorage.getItem('theme') || 'dark';
+  const currentColorTheme = localStorage.getItem('colorTheme') || 'default';
+  
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+
+      <div class="settings-group">
+        <h3>Appearance</h3>
+        <div class="settings-option">
+          <div class="settings-label">
+            <strong>Theme</strong>
+            <small>Choose dark or light mode</small>
+          </div>
+          <div class="theme-selector">
+            <button class="theme-option ${currentTheme === 'dark' ? 'active' : ''}" data-theme="dark">Dark</button>
+            <button class="theme-option ${currentTheme === 'light' ? 'active' : ''}" data-theme="light">Light</button>
+          </div>
+        </div>
+        <div class="settings-option">
+          <div class="settings-label">
+            <strong>Color Theme</strong>
+            <small>Personalize your accent color</small>
+          </div>
+          <div class="color-theme-grid">
+            <button class="color-option ${currentColorTheme === 'default' ? 'active' : ''}" data-color="default" title="Blue">🔵</button>
+            <button class="color-option ${currentColorTheme === 'purple' ? 'active' : ''}" data-color="purple" title="Purple">🟣</button>
+            <button class="color-option ${currentColorTheme === 'green' ? 'active' : ''}" data-color="green" title="Green">🟢</button>
+            <button class="color-option ${currentColorTheme === 'orange' ? 'active' : ''}" data-color="orange" title="Orange">🟠</button>
+            <button class="color-option ${currentColorTheme === 'pink' ? 'active' : ''}" data-color="pink" title="Pink">🔴</button>
+            <button class="color-option ${currentColorTheme === 'cyan' ? 'active' : ''}" data-color="cyan" title="Cyan">🌀</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3>Data & Storage</h3>
+        <div class="settings-option" style="flex-direction: column; align-items: flex-start;">
+          <div class="settings-label">
+            <strong>Clear Stored Memory</strong>
+            <small>Clears local storage (preferences, cached settings, etc.)</small>
+          </div>
+          <div class="button-row">
+            <button id="settings-clear-memory-btn" class="danger-btn">Clear memory</button>
+            <span id="settings-clear-memory-status" class="muted"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3>Developer Tools</h3>
+        <div class="settings-option" style="flex-direction: column; align-items: flex-start;">
+          <div class="settings-label">
+            <strong>Developer Mode</strong>
+            <small>Access advanced tools for testing and debugging</small>
+          </div>
+          <div style="margin-top: 0.75rem;">
+            <button id="settings-developer-toggle-btn" class="secondary-btn">${developerModeEnabled ? 'Disable developer mode' : 'Enable developer mode'}</button>
+            <p class="muted" style="margin-top: 0.5rem; margin-bottom: 0;">${developerModeEnabled ? 'Developer tab is visible.' : 'Enable to reveal the developer tab.'}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Close on background click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+
+  // Theme buttons
+  modal.querySelectorAll('.theme-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const theme = btn.dataset.theme;
+      localStorage.setItem('theme', theme);
+      document.documentElement.setAttribute('data-theme', theme);
+      modal.querySelectorAll('.theme-option').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Color theme buttons
+  modal.querySelectorAll('.color-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const color = btn.dataset.color;
+      localStorage.setItem('colorTheme', color);
+      applyColorTheme(color);
+      modal.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Clear memory button
+  const clearMemoryBtn = document.getElementById('settings-clear-memory-btn');
   if (clearMemoryBtn) {
     clearMemoryBtn.onclick = () => {
-      const statusEl = document.getElementById('clear-memory-status');
+      const statusEl = document.getElementById('settings-clear-memory-status');
       const setStatus = (msg) => {
         if (statusEl) statusEl.textContent = msg;
       };
@@ -1505,8 +1985,8 @@ async function showProfileTab() {
 
       try {
         localStorage.clear();
-        // Keep developer mode on by default after clearing
-        setDeveloperMode(true);
+        localStorage.setItem('theme', currentTheme);
+        localStorage.setItem('colorTheme', currentColorTheme);
         setStatus('Memory cleared.');
         setTimeout(() => setStatus(''), 3000);
       } catch (err) {
@@ -1514,6 +1994,22 @@ async function showProfileTab() {
         setStatus(`Failed: ${err.message}`);
       } finally {
         clearMemoryBtn.disabled = false;
+      }
+    };
+  }
+
+  // Developer toggle button
+  const developerToggleBtn = document.getElementById('settings-developer-toggle-btn');
+  if (developerToggleBtn) {
+    developerToggleBtn.onclick = () => {
+      const next = !developerModeEnabled;
+      setDeveloperMode(next);
+      developerToggleBtn.textContent = next ? 'Disable developer mode' : 'Enable developer mode';
+      
+      // Update the label
+      const label = developerToggleBtn.parentElement.parentElement.querySelector('.settings-label small');
+      if (label) {
+        label.textContent = next ? 'Access advanced tools for testing and debugging' : 'Access advanced tools for testing and debugging';
       }
     };
   }
@@ -1650,9 +2146,17 @@ window.showAlbum = showAlbum;
 window.showSong = showSong;
 window.showGenre = showGenre;
 window.showQuest = showQuest;
+window.showArtistsPage = showArtistsPage;
+window.showAlbumsPage = showAlbumsPage;
+window.showGenresPage = showGenresPage;
 window.goBack = goBack;
 window.markSongListened = markSongListened;
 console.log('[app.js] Functions exposed to window, goBack is:', typeof window.goBack);
 
 // Fallback in case the initial visibility set runs before layout is ready
 ensureDeveloperTabVisible();
+
+// Initialize the search page on load
+window.addEventListener('DOMContentLoaded', () => {
+  showSearchTab();
+});

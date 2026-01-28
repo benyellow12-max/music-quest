@@ -22,6 +22,18 @@
     "name": "Claude Debussy",
     "sort_name": "Debussy, Claude",
     "notes": "French composer"
+  },
+  {
+    "id": "art_0005",
+    "name": "2Pac",
+    "sort_name": "TwoPac",
+    "notes": "American rapper"
+  },
+  {
+    "id": "art_0006",
+    "name": "Nick Hexum",
+    "sort_name": "Hexum, Nick",
+    "notes": "American musician, lead vocalist of 311"
   }
 ]
 
