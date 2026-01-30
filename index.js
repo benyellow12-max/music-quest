@@ -13,6 +13,9 @@ const PORT = process.env.PORT || 3000;
 
 console.log(`[STARTUP] Using PORT: ${PORT}`);
 
+// Middleware for parsing JSON and form data
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 function loadJSON(filePath) {
   try {
     const data = fs.readFileSync(filePath, "utf-8");
@@ -226,16 +229,162 @@ app.get("/platforms", (req, res) => {
   res.json(platforms);
 });
 
-app.get("/profile", (req, res) => {
-  // Mock profile data for now; later replace with real user session
-  res.json({
-    username: "Demo User",
-    providers: [
-      { name: "Spotify", linked: false },
-      { name: "Apple Music", linked: false },
-      { name: "YouTube", linked: false }
-    ]
-  });
+// In-memory user storage (in production, use a database)
+const users = new Map();
+
+// Helper function to generate user ID
+function generateUserId() {
+  return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// Get current user profile
+app.get("/api/profile", verifyToken, (req, res) => {
+  try {
+    const userId = req.user?.uid || 'demo-user';
+    const user = users.get(userId);
+    
+    if (!user) {
+      // Return demo user if not found
+      return res.json({
+        username: "Demo User",
+        email: "demo@example.com",
+        totalScore: 0,
+        createdAt: new Date().toISOString()
+      });
+    }
+    
+    res.json({
+      username: user.username,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      totalScore: user.totalScore || 0,
+      createdAt: user.createdAt
+    });
+  } catch (error) {
+    console.error('Error getting profile:', error);
+    res.status(500).json({ error: 'Failed to get profile' });
+  }
+});
+
+// Create new user account
+app.post("/api/auth/signup", (req, res) => {
+  try {
+    const { username, email } = req.body;
+    
+    if (!username || !email) {
+      return res.status(400).json({ error: 'Username and email are required' });
+    }
+    
+    if (username.length < 3) {
+      return res.status(400).json({ error: 'Username must be at least 3 characters' });
+    }
+    
+    if (!email.includes('@')) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    // Check if username already exists
+    const usernameExists = Array.from(users.values()).some(u => u.username === username);
+    if (usernameExists) {
+      return res.status(400).json({ error: 'Username already taken' });
+    }
+    
+    const userId = generateUserId();
+    const newUser = {
+      id: userId,
+      username: username.trim(),
+      email: email.trim(),
+      totalScore: 0,
+      createdAt: new Date().toISOString(),
+      avatarUrl: null
+    };
+    
+    users.set(userId, newUser);
+    
+    res.status(201).json({
+      id: userId,
+      username: newUser.username,
+      email: newUser.email,
+      createdAt: newUser.createdAt
+    });
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).json({ error: 'Signup failed' });
+  }
+});
+
+// Update username
+app.put("/api/profile/username", verifyToken, (req, res) => {
+  try {
+    const { username } = req.body;
+    const userId = req.user?.uid || 'demo-user';
+    
+    if (!username || username.length < 3) {
+      return res.status(400).json({ error: 'Username must be at least 3 characters' });
+    }
+    
+    const user = users.get(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Check if new username is already taken
+    const usernameExists = Array.from(users.values()).some(
+      u => u.username === username && u.id !== userId
+    );
+    if (usernameExists) {
+      return res.status(400).json({ error: 'Username already taken' });
+    }
+    
+    user.username = username.trim();
+    users.set(userId, user);
+    
+    res.json({ username: user.username });
+  } catch (error) {
+    console.error('Error updating username:', error);
+    res.status(500).json({ error: 'Failed to update username' });
+  }
+});
+
+// Upload profile avatar
+app.post("/api/profile/avatar", verifyToken, (req, res) => {
+  try {
+    const userId = req.user?.uid || 'demo-user';
+    const user = users.get(userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // In production, you would save the file to cloud storage (Firebase Storage, S3, etc.)
+    // For development, generate a URL that persists the avatar assignment
+    const avatarUrl = `https://api.example.com/avatars/${userId}-${Date.now()}`;
+    user.avatarUrl = avatarUrl;
+    users.set(userId, user);
+    
+    res.json({ avatarUrl: user.avatarUrl });
+  } catch (error) {
+    console.error('Error uploading avatar:', error);
+    res.status(500).json({ error: 'Failed to upload avatar' });
+  }
+});
+
+// Delete user account
+app.delete("/api/profile", verifyToken, (req, res) => {
+  try {
+    const userId = req.user?.uid || 'demo-user';
+    
+    if (!users.has(userId)) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    users.delete(userId);
+    
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({ error: 'Failed to delete account' });
+  }
 });
 
 app.get("/genres", (req, res) => {

@@ -1759,6 +1759,118 @@ window.filterAlbumsByType = (typeFilter, context) => {
   });
 };
 
+function setupProfileEventHandlers(profileData) {
+  // Change Photo
+  const changePhotoBtn = document.getElementById('change-photo-btn');
+  const avatarInput = document.getElementById('avatar-input');
+  if (changePhotoBtn && avatarInput) {
+    changePhotoBtn.onclick = () => avatarInput.click();
+    avatarInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      try {
+        const response = await fetch('/api/profile/avatar', {
+          method: 'POST',
+          body: formData
+        });
+        if (response.ok) {
+          alert('Profile picture updated!');
+          showProfileTab(); // Reload
+        } else {
+          alert('Failed to upload profile picture');
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        alert('Failed to upload profile picture');
+      }
+    };
+  }
+  
+  // Edit Username
+  const editUsernameBtn = document.getElementById('edit-username-btn');
+  const usernameDisplay = document.getElementById('username-display');
+  const usernameEdit = document.getElementById('username-edit');
+  const saveUsernameBtn = document.getElementById('save-username-btn');
+  const cancelUsernameBtn = document.getElementById('cancel-username-btn');
+  const newUsernameInput = document.getElementById('new-username-input');
+  
+  if (editUsernameBtn) {
+    editUsernameBtn.onclick = () => {
+      usernameDisplay.style.display = 'none';
+      usernameEdit.style.display = 'block';
+      newUsernameInput.focus();
+    };
+  }
+  
+  if (cancelUsernameBtn) {
+    cancelUsernameBtn.onclick = () => {
+      usernameDisplay.style.display = 'flex';
+      usernameEdit.style.display = 'none';
+      newUsernameInput.value = profileData.username || '';
+    };
+  }
+  
+  if (saveUsernameBtn) {
+    saveUsernameBtn.onclick = async () => {
+      const newUsername = newUsernameInput.value.trim();
+      if (!newUsername) {
+        alert('Username cannot be empty');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/profile/username', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: newUsername })
+        });
+        
+        if (response.ok) {
+          alert('Username updated!');
+          showProfileTab(); // Reload
+        } else {
+          const data = await response.json();
+          alert(data.error || 'Failed to update username');
+        }
+      } catch (err) {
+        console.error('Update error:', err);
+        alert('Failed to update username');
+      }
+    };
+  }
+  
+  // Delete Account
+  const deleteAccountBtn = document.getElementById('delete-account-btn');
+  if (deleteAccountBtn) {
+    deleteAccountBtn.onclick = async () => {
+      if (!confirm('This action cannot be undone. Are you sure you want to delete your account?')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/profile', {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          alert('Account deleted successfully');
+          // Optionally logout or redirect
+          window.location.reload();
+        } else {
+          alert('Failed to delete account');
+        }
+      } catch (err) {
+        console.error('Delete error:', err);
+        alert('Failed to delete account');
+      }
+    };
+  }
+}
+
 async function showProfileTab() {
   const tabs = document.querySelectorAll('.tab-btn');
   tabs.forEach(tab => tab.classList.remove('active'));
@@ -1780,32 +1892,81 @@ async function showProfileTab() {
 
   if (isLoggedIn) {
     try {
-      const fb = getFirebase();
-      const userDoc = await fb.getDoc(fb.doc('users', currentUser.uid));
-      const userData = userDoc.exists() ? userDoc.data() : {};
+      // Fetch profile from API
+      const response = await fetch('/api/profile');
+      const profileData = await response.json();
       
       const el = document.getElementById('profile-content');
       if (!el) return;
 
-      const providerRows = (userData.providers || []).map(p => {
-        const status = p.linked ? 'Linked' : 'Not linked';
-        return `<div class="list-item">
-          <div class="item-info">
-            <div>${p.name}</div>
-            <div class="subtitle">${status}</div>
-          </div>
-          <div>
-            <button class="primary-btn" disabled>${p.linked ? 'Manage' : 'Link'}</button>
-          </div>
-        </div>`;
-      }).join('');
-
       el.innerHTML = `
-        <p><strong>Email:</strong> ${currentUser.email}</p>
-        <p><strong>User ID:</strong> ${currentUser.uid}</p>
-        <h3>Linked Accounts</h3>
-        <div class="items-list">${providerRows || '<p><em>No music accounts linked yet</em></p>'}</div>
+        <div style="max-width: 600px;">
+          <!-- Profile Picture Section -->
+          <div style="text-align: center; margin: 2rem 0;">
+            <h3>Profile Picture</h3>
+            <div style="margin: 1rem 0;">
+              ${profileData.avatarUrl 
+                ? `<img src="${profileData.avatarUrl}" alt="Profile" style="width: 120px; height: 120px; border-radius: 60px; object-fit: cover;" />`
+                : `<div style="width: 120px; height: 120px; border-radius: 60px; background: #e8e8e8; display: inline-flex; align-items: center; justify-content: center; font-size: 48px;">👤</div>`
+              }
+            </div>
+            <input type="file" id="avatar-input" accept="image/*" style="display: none;" />
+            <button id="change-photo-btn" class="primary-btn">Change Photo</button>
+          </div>
+
+          <!-- Username Section -->
+          <div style="margin: 2rem 0;">
+            <h3>Username</h3>
+            <div id="username-display" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: var(--tertiary-bg); border: 2px solid var(--border-color); border-radius: 3px; margin-top: 0.5rem;">
+              <span style="flex: 1; font-weight: 600; color: var(--text-primary);">${profileData.username || 'No username'}</span>
+              <button id="edit-username-btn" class="secondary-btn" style="padding: 0.5rem 1rem;">✏️ Edit</button>
+            </div>
+            <div id="username-edit" style="display: none; margin-top: 0.5rem;">
+              <input type="text" id="new-username-input" value="${profileData.username || ''}" 
+                     maxlength="50" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 3px; color: var(--text-primary); background: var(--tertiary-bg);" />
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                <button id="save-username-btn" class="primary-btn" style="flex: 1;">Save</button>
+                <button id="cancel-username-btn" class="secondary-btn" style="flex: 1;">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Stats -->
+          <div style="margin: 2rem 0;">
+            <h3>Account Stats</h3>
+            <div style="margin-top: 0.5rem;">
+              <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--tertiary-bg); border: 2px solid var(--border-color); border-radius: 3px; margin-bottom: 0.5rem;">
+                <span style="color: var(--text-secondary);">Total Score</span>
+                <strong style="color: var(--accent-primary);">${profileData.totalScore || 0}</strong>
+              </div>
+              ${profileData.email ? `
+                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--tertiary-bg); border: 2px solid var(--border-color); border-radius: 3px; margin-bottom: 0.5rem;">
+                  <span style="color: var(--text-secondary);">Email</span>
+                  <span style="color: var(--text-primary);">${profileData.email}</span>
+                </div>
+              ` : ''}
+              ${profileData.createdAt ? `
+                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--tertiary-bg); border: 2px solid var(--border-color); border-radius: 3px;">
+                  <span style="color: var(--text-secondary);">Joined</span>
+                  <span style="color: var(--text-primary);">${new Date(profileData.createdAt).toLocaleDateString()}</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Danger Zone -->
+          <div style="margin: 3rem 0; padding-top: 2rem; border-top: 2px solid #ff4444;">
+            <h3 style="color: #ff4444;">Danger Zone</h3>
+            <button id="delete-account-btn" class="primary-btn" style="background: #ff4444; margin-top: 1rem;">Delete Account</button>
+            <p style="font-size: 12px; color: #ff4444; font-style: italic; margin-top: 0.5rem;">
+              This action cannot be undone. All your data will be permanently deleted.
+            </p>
+          </div>
+        </div>
       `;
+
+      // Setup event handlers
+      setupProfileEventHandlers(profileData);
     } catch (err) {
       console.error('Failed to load profile', err);
       const el = document.getElementById('profile-content');

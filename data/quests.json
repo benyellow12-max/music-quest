@@ -108,7 +108,6 @@
     "templateId": "qtpl_0006",
     "params": {
       "requiredCount": 1,
-      "artistId": "art_0001",
       "startTime": "18:00",
       "endTime": "6:00"
     },

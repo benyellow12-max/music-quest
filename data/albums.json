@@ -4,7 +4,7 @@
         "title": "Music",
         "artistIds": ["art_0001"],
         "year": 1993,
-        "recordingIds": ["rec_0001", "rec_0005", "rec_0006"],
+        "recordingIds": ["rec_0001", "rec_0005", "rec_0006", "rec_0013", "rec_0014", "rec_0015", "rec_0016", "rec_0017", "rec_0020", "rec_0021", "rec_0022", "rec_0023"],
         "type": "LP"
     },
     {
@@ -52,7 +52,7 @@
         "title": "Greatest Hits '93-'03",
         "artistIds": ["art_0001"],
         "year": 2004,
-        "recordingIds": ["rec_0010"],
+        "recordingIds": ["rec_0022", "rec_0010"],
         "type": "Compilation"
     },
     {
@@ -70,5 +70,13 @@
         "year": 1991,
         "recordingIds": ["rec_0012"],
         "type": "LP"
+    },
+    {
+        "id": "alb_0010",
+        "title": "Music 30th Anniversary",
+        "artistIds": ["art_0001"],
+        "year": 2023,
+        "recordingIds": ["rec_0001", "rec_0005", "rec_0006", "rec_0013", "rec_0014", "rec_0015", "rec_0016", "rec_0018", "rec_0019", "rec_0020", "rec_0021", "rec_0022", "rec_0024", "rec_0025", "rec_0003"],
+        "type": "Extended LP"
     }
 ]

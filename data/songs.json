@@ -176,5 +176,215 @@
       "time_signature": "4/4",
       "duration_seconds": 258
     }
+  },
+  {
+    "song_id": "rec_0013",
+    "title": "Paradise",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1993,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 144,
+      "key": "B major",
+      "time_signature": "4/4",
+      "duration_seconds": 302
+    }
+  },
+  {
+    "song_id": "rec_0014",
+    "title": "Unity",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1993,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 144,
+      "key": "B major",
+      "time_signature": "4/4",
+      "duration_seconds": 302
+    }
+  },
+  {
+    "song_id": "rec_0014",
+    "title": "Unity",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1993,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 144,
+      "key": "A major",
+      "time_signature": "4/4",
+      "duration_seconds": 207
+    }
+  },
+  {
+    "song_id": "rec_0015",
+    "title": "Hydroponic",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1992,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 136,
+      "key": "E major",
+      "time_signature": "4/4",
+      "duration_seconds": 234
+    }
+  },
+  {
+    "song_id": "rec_0016",
+    "title": "My Stoney Baby",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1993,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 95,
+      "key": "F major",
+      "time_signature": "4/4",
+      "duration_seconds": 224
+    }
+  },
+  {
+    "song_id": "rec_0017",
+    "title": "Nix Hex",
+    "variant": "Music Version",
+    "artist_ids": ["art_0001"],
+    "year":1993,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 144,
+      "key": "Ab major",
+      "time_signature": "4/4",
+      "duration_seconds": 249
+    }
+  },
+  {
+    "song_id": "rec_0018",
+    "title": "Nix Hex",
+    "variant": "Anniversary Version",
+    "artist_ids": ["art_0001"],
+    "year":1993,
+    "album_id": ["alb_0010"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 144,
+      "key": "F major",
+      "time_signature": "4/4",
+      "duration_seconds": 181
+    }
+  },
+  {
+    "song_id": "rec_0019",
+    "title": "Raga Drop",
+    "variant": "Anniversary Version",
+    "artist_ids": ["art_0001", "art_0007"],
+    "year":1993,
+    "album_id": ["alb_0010"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 176,
+      "key": "Db major",
+      "time_signature": "4/4",
+      "duration_seconds": 58
+    }
+  },
+  {
+    "song_id": "rec_0020",
+    "title": "Plain",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1993,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 106,
+      "key": "D major",
+      "time_signature": "4/4",
+      "duration_seconds": 177
+    }
+  },
+  {
+    "song_id": "rec_0021",
+    "title": "Feels So Good",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1993,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 118,
+      "key": "Gb major",
+      "time_signature": "4/4",
+      "duration_seconds": 203
+    }
+  },
+  {
+    "song_id": "rec_0022",
+    "title": "Do You Right",
+    "variant": "Album Version",
+    "artist_ids": ["art_0001"],
+    "year": 1993,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 110,
+      "key": "A major",
+      "time_signature": "4/4",
+      "duration_seconds": 258
+    }
+  },
+  {
+    "song_id": "rec_0023",
+    "title": "Fat Chance",
+    "variant": "Music Version",
+    "artist_ids": ["art_0001"],
+    "year": 1993,
+    "album_id": ["alb_0001"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 118,
+      "key": "B major",
+      "time_signature": "4/4",
+      "duration_seconds": 305
+    }
+  },
+  {
+    "song_id": "rec_0024",
+    "title": "Fat Chance",
+    "variant": "Anniversary Version",
+    "artist_ids": ["art_0001"],
+    "year": 1993,
+    "album_id": ["alb_0010"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 120,
+      "key": "A major",
+      "time_signature": "4/4",
+      "duration_seconds": 83
+    }
+  },
+  {
+    "song_id": "rec_0025",
+    "title": "Fuck the Bullshit",
+    "variant": "Anniversary Version",
+    "artist_ids": ["art_0001"],
+    "year": 1993,
+    "album_id": ["alb_0010"],
+    "genre_ids": ["gen_0010"],
+    "audio": {
+      "bpm": 118,
+      "key": "E major",
+      "time_signature": "4/4",
+      "duration_seconds": 225
+    }
   }
 ]
