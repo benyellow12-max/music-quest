@@ -5,6 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const { verifyToken } = require('./server-firebase');
 const { clearCache } = require("./lib/db");
+const { expandAllSongsGenres } = require('./lib/genreHierarchy');
 
 console.log("[STARTUP] Starting server initialization...");
 
@@ -102,6 +103,9 @@ function reloadDataFromDisk() {
   genres = loadDataFile(genresPath, "genres");
   quests = loadDataFile(questsPath, "quests");
   questTemplates = loadDataFile(questTemplatesPath, "quest templates");
+
+  // Expand songs to include parent genres automatically
+  songs = expandAllSongsGenres(songs, genres);
 
   rebuildIndexes();
 }
