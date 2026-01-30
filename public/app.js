@@ -1579,7 +1579,12 @@ function setupGenresSearch() {
       renderAllGenres();
     } else {
       const filtered = allGenres.filter(g => g.name.toLowerCase().includes(query));
-      renderGenresList(filtered);
+      const sorted = [...filtered].sort((a, b) => {
+        const nameA = (a.name || '').toUpperCase();
+        const nameB = (b.name || '').toUpperCase();
+        return nameA.localeCompare(nameB);
+      });
+      renderGenresList(sorted);
     }
   });
 }
@@ -1661,7 +1666,14 @@ function renderGenresList(genres) {
     return;
   }
 
-  container.innerHTML = genres.map((genre, idx) => {
+  // Sort genres alphabetically by name
+  const sortedGenres = [...genres].sort((a, b) => {
+    const nameA = (a.name || '').toUpperCase();
+    const nameB = (b.name || '').toUpperCase();
+    return nameA.localeCompare(nameB);
+  });
+
+  container.innerHTML = sortedGenres.map((genre, idx) => {
     // Count songs that have this genre in genre_ids array OR as single genre_id
     const songCount = allSongs.filter(s => {
       if (s.genre_ids && s.genre_ids.includes(genre.id)) return true;
