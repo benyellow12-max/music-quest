@@ -78,5 +78,13 @@
         "year": 2023,
         "recordingIds": ["rec_0001", "rec_0005", "rec_0006", "rec_0013", "rec_0014", "rec_0015", "rec_0016", "rec_0018", "rec_0019", "rec_0020", "rec_0021", "rec_0022", "rec_0024", "rec_0025", "rec_0003"],
         "type": "Extended LP"
+    },
+    {
+        "id": "alb_0011",
+        "title": "Jaws of Life",
+        "artistIds": ["art_0008"],
+        "year": 2023,
+        "recordingIds": ["rec_0026"],
+        "type": "LP"
     }
 ]

@@ -3,7 +3,7 @@
     "id": "gen_0001",
     "name": "Rock",
     "parentId": null,
-    "rootId": ["gen_0017", "gen_0016", "gen_0019"]
+    "rootId": ["gen_0017", "gen_0016", "gen_0019", "gen_0029", "gen_0030", "gen_0014", "gen_0031"]
   },
   {
     "id": "gen_0002",
@@ -33,7 +33,7 @@
   {
     "id": "gen_0007",
     "name": "Contemporary Folk",
-    "parentId": null
+    "parentId": "gen_0031"
   },
   {
     "id": "gen_0008",
@@ -110,7 +110,7 @@
   {
     "id": "gen_0022",
     "name": "Traditional/Folk",
-    "parentId": null
+    "parentId": "gen_0031"
   },
   {
     "id": "gen_0023",
@@ -134,12 +134,29 @@
   },
   {
     "id": "gen_0027",
-    "name": "Emocore",
-    "parentId": "gen_0026"
+    "name": "Emo",
+    "parentId": "gen_0024",
+    "rootId": ["gen_0025"]
   },
   {
     "id": "gen_0028",
     "name": "Emo Pop",
-    "parentId": ["gen_0027", "gen_0005"]
+    "parentId": "gen_0027",
+    "rootId": ["gen_0027", "gen_0005"]
+  },
+  {
+    "id": "gen_0029",
+    "name": "Rock and Roll",
+    "parentId": "gen_0001"
+  },
+  {
+    "id": "gen_0030",
+    "name": "Rockabilly",
+    "parentId": "gen_0001"
+  },
+  {
+    "id": "gen_0031",
+    "name": "Folk",
+    "parentId": null
   }
 ]

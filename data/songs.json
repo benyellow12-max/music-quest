@@ -386,5 +386,20 @@
       "time_signature": "4/4",
       "duration_seconds": 225
     }
+  },
+  {
+    "song_id": "rec_0026",
+    "title": "Emergency Contact",
+    "variant": "Album Version",
+    "artist_ids": ["art_0008"],
+    "year": 2023,
+    "album_id": ["alb_0011"],
+    "genre_ids": ["gen_0028"],
+    "audio": {
+      "bpm": 113,
+      "key": "Eb major",
+      "time_signature": "4/4",
+      "duration_seconds": 240
+    }
   }
 ]
