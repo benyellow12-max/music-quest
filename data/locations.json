@@ -1,0 +1,227 @@
+[
+  {
+    "id": "loc_0001",
+    "name": "Blue Note Jazz Club",
+    "type": "venue",
+    "subtype": "jazz_club",
+    "coordinates": {
+      "lat": 40.7295,
+      "lon": -73.9965
+    },
+    "address": "131 W 3rd St, New York, NY 10012",
+    "description": "Legendary jazz club in Greenwich Village",
+    "associatedArtists": ["art_0001"],
+    "checkInRadius": 100,
+    "active": true
+  },
+  {
+    "id": "loc_0002",
+    "name": "Rough Trade Records NYC",
+    "type": "record_store",
+    "subtype": "independent_store",
+    "coordinates": {
+      "lat": 40.7218,
+      "lon": -73.9876
+    },
+    "address": "64 N 9th St, Brooklyn, NY 11249",
+    "description": "Independent record store with live music venue",
+    "associatedGenres": ["gen_0001", "gen_0010"],
+    "checkInRadius": 50,
+    "active": true
+  },
+  {
+    "id": "loc_0003",
+    "name": "Rock & Roll Hall of Fame",
+    "type": "museum",
+    "subtype": "music_museum",
+    "coordinates": {
+      "lat": 41.5086,
+      "lon": -81.6954
+    },
+    "address": "1100 Rock and Roll Blvd, Cleveland, OH 44114",
+    "description": "Museum dedicated to rock and roll history",
+    "associatedGenres": ["gen_0001"],
+    "checkInRadius": 200,
+    "active": true
+  },
+  {
+    "id": "loc_0004",
+    "name": "Abbey Road Studios",
+    "type": "recording_studio",
+    "subtype": "historic_studio",
+    "coordinates": {
+      "lat": 51.5319,
+      "lon": -0.1783
+    },
+    "address": "3 Abbey Rd, St John's Wood, London NW8 9AY, UK",
+    "description": "Iconic recording studio made famous by The Beatles",
+    "associatedArtists": ["art_0001"],
+    "checkInRadius": 100,
+    "active": true
+  },
+  {
+    "id": "loc_0005",
+    "name": "Red Rocks Amphitheatre",
+    "type": "venue",
+    "subtype": "amphitheatre",
+    "coordinates": {
+      "lat": 39.6654,
+      "lon": -105.2057
+    },
+    "address": "18300 W Alameda Pkwy, Morrison, CO 80465",
+    "description": "Open-air amphitheatre with natural acoustics",
+    "associatedGenres": ["gen_0001", "gen_0010"],
+    "checkInRadius": 300,
+    "active": true
+  },
+  {
+    "id": "loc_0006",
+    "name": "The Cavern Club",
+    "type": "venue",
+    "subtype": "music_club",
+    "coordinates": {
+      "lat": 53.4061,
+      "lon": -2.9870
+    },
+    "address": "10 Mathew St, Liverpool L2 6RE, UK",
+    "description": "Historic music venue where The Beatles performed",
+    "associatedArtists": ["art_0001"],
+    "checkInRadius": 75,
+    "active": true
+  },
+  {
+    "id": "loc_0007",
+    "name": "Amoeba Music Hollywood",
+    "type": "record_store",
+    "subtype": "independent_store",
+    "coordinates": {
+      "lat": 34.0963,
+      "lon": -118.3267
+    },
+    "address": "6200 Hollywood Blvd, Los Angeles, CA 90028",
+    "description": "World's largest independent music store",
+    "associatedGenres": ["gen_0001", "gen_0010", "gen_0005"],
+    "checkInRadius": 100,
+    "active": true
+  },
+  {
+    "id": "loc_0008",
+    "name": "Preservation Hall",
+    "type": "venue",
+    "subtype": "jazz_club",
+    "coordinates": {
+      "lat": 29.9579,
+      "lon": -90.0659
+    },
+    "address": "726 St Peter St, New Orleans, LA 70116",
+    "description": "Historic New Orleans jazz venue",
+    "associatedGenres": ["gen_0010"],
+    "checkInRadius": 50,
+    "active": true
+  },
+  {
+    "id": "loc_0009",
+    "name": "Electric Lady Studios",
+    "type": "recording_studio",
+    "subtype": "historic_studio",
+    "coordinates": {
+      "lat": 40.7297,
+      "lon": -74.0014
+    },
+    "address": "52 W 8th St, New York, NY 10011",
+    "description": "Recording studio built by Jimi Hendrix",
+    "associatedArtists": ["art_0001"],
+    "checkInRadius": 75,
+    "active": true
+  },
+  {
+    "id": "loc_0010",
+    "name": "Stax Museum",
+    "type": "museum",
+    "subtype": "music_museum",
+    "coordinates": {
+      "lat": 35.1119,
+      "lon": -90.0269
+    },
+    "address": "926 E McLemore Ave, Memphis, TN 38106",
+    "description": "Museum celebrating soul music history",
+    "associatedGenres": ["gen_0005"],
+    "checkInRadius": 100,
+    "active": true
+  },
+  {
+    "id": "loc_0011",
+    "name": "Madison Square Garden",
+    "type": "venue",
+    "subtype": "arena",
+    "coordinates": {
+      "lat": 40.7505,
+      "lon": -73.9934
+    },
+    "address": "4 Pennsylvania Plaza, New York, NY 10001",
+    "description": "World-famous indoor arena and concert venue",
+    "associatedGenres": ["gen_0001", "gen_0010", "gen_0005"],
+    "checkInRadius": 200,
+    "active": true
+  },
+  {
+    "id": "loc_0012",
+    "name": "Sonic Boom Records",
+    "type": "record_store",
+    "subtype": "independent_store",
+    "coordinates": {
+      "lat": 47.6148,
+      "lon": -122.3212
+    },
+    "address": "2209 NW Market St, Seattle, WA 98107",
+    "description": "Seattle independent record store",
+    "associatedGenres": ["gen_0001", "gen_0010"],
+    "checkInRadius": 50,
+    "active": true
+  },
+  {
+    "id": "loc_0013",
+    "name": "Ryman Auditorium",
+    "type": "venue",
+    "subtype": "historic_venue",
+    "coordinates": {
+      "lat": 36.1612,
+      "lon": -86.7785
+    },
+    "address": "116 5th Ave N, Nashville, TN 37219",
+    "description": "Historic music venue, former home of Grand Ole Opry",
+    "associatedGenres": ["gen_0001"],
+    "checkInRadius": 150,
+    "active": true
+  },
+  {
+    "id": "loc_0014",
+    "name": "Sun Studio",
+    "type": "recording_studio",
+    "subtype": "historic_studio",
+    "coordinates": {
+      "lat": 35.1444,
+      "lon": -90.0256
+    },
+    "address": "706 Union Ave, Memphis, TN 38103",
+    "description": "Birthplace of rock 'n' roll, where Elvis recorded",
+    "associatedArtists": ["art_0001"],
+    "checkInRadius": 75,
+    "active": true
+  },
+  {
+    "id": "loc_0015",
+    "name": "Coachella Valley Music Festival Grounds",
+    "type": "venue",
+    "subtype": "festival_grounds",
+    "coordinates": {
+      "lat": 33.6803,
+      "lon": -116.2378
+    },
+    "address": "81-800 51st Ave, Indio, CA 92201",
+    "description": "Annual music festival venue",
+    "associatedGenres": ["gen_0001", "gen_0010", "gen_0005"],
+    "checkInRadius": 500,
+    "active": true
+  }
+]

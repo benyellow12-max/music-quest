@@ -243,7 +243,114 @@ function recordingMatchesQuestParams(recording, questParams) {
     return false;
   }
 
+  // Genre match (if applicable)
+  if (questParams.genreId) {
+    const recGenreIds = recording.genre_ids || recording.genreIds || [];
+    if (!recGenreIds.includes(questParams.genreId)) {
+      return false;
+    }
+  }
+
+  // Album match (if applicable)
+  if (questParams.albumId) {
+    const recAlbumId = recording.album_id || recording.albumId;
+    if (recAlbumId !== questParams.albumId) {
+      return false;
+    }
+  }
+
+  // Time window match (if applicable) - check current time
+  if (questParams.startTime && questParams.endTime) {
+    const now = new Date();
+    const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    // Compare time strings (HH:MM format)
+    if (currentTimeStr < questParams.startTime || currentTimeStr > questParams.endTime) {
+      return false;
+    }
+  }
+
   return true;
+}
+
+// Template utilities for client-side
+function getTemplateForQuest(quest) {
+  if (!quest || !quest.templateId || !allQuestTemplates) {
+    return null;
+  }
+  return allQuestTemplates.find(t => t && t.id === quest.templateId);
+}
+
+function getTemplateDescription(template) {
+  if (!template || !template.description) {
+    return "Complete a quest";
+  }
+  return template.description;
+}
+
+function renderTemplateDescription(template, questParams) {
+  if (!template || !template.description) {
+    return "Complete a quest";
+  }
+
+  let description = template.description;
+  const params = questParams || {};
+
+  // Replace template variables with actual values
+  description = description.replace(/{{count}}/g, params.count || params.requiredCount || "1");
+  description = description.replace(/{{minutes}}/g, params.minutes || "60");
+  description = description.replace(/{{days}}/g, params.days || "1");
+  description = description.replace(/{{startYear}}/g, params.startYear || "2000");
+  description = description.replace(/{{endYear}}/g, params.endYear || "2024");
+  description = description.replace(/{{startTime}}/g, params.startTime || "00:00");
+  description = description.replace(/{{endTime}}/g, params.endTime || "23:59");
+  description = description.replace(/{{number}}/g, params.number || "1");
+  description = description.replace(/{{songs}}/g, params.songs || "1");
+  description = description.replace(/{{accountType}}/g, params.accountType || "account");
+  description = description.replace(/{{locationtype}}/g, params.locationtype || "location");
+
+  // Replace entity IDs with names
+  if (params.artistId) {
+    const artist = allArtists.find(a => a && a.id === params.artistId);
+    if (artist) {
+      description = description.replace(/{{artistId}}/g, artist.name);
+    }
+  }
+
+  if (params.genreId) {
+    const genre = allGenres.find(g => g && g.id === params.genreId);
+    if (genre) {
+      description = description.replace(/{{genreId}}/g, genre.name);
+    }
+  }
+
+  if (params.albumId) {
+    const album = allAlbums.find(a => a && a.id === params.albumId);
+    if (album) {
+      description = description.replace(/{{albumId}}/g, album.title);
+    }
+  }
+
+  return description;
+}
+
+function getTemplateMatchCriteria(template) {
+  if (!template) return [];
+
+  const criteria = {
+    "listen_count": ["artist"],
+    "listen_minutes": ["artist"],
+    "listen_by_year": ["artist", "year"],
+    "listen_by_genre": ["genre", "artist"],
+    "listen_between_time": ["artist", "time"],
+    "travel_amount": [],
+    "listen_to_album": ["album", "artist"],
+    "connect_account": [],
+    "location_checkin": [],
+    "streak_app": []
+  };
+
+  return criteria[template.type] || [];
 }
 
 function questImpactForSong(song) {
@@ -444,7 +551,7 @@ function getPlatformsForEntity(entityType, entityId) {
   return allPlatforms.filter(p => p.entityType === entityType && p.entityId === entityId);
 }
 
-function renderPlatformLinks(platforms) {
+function renderPlatformLinks(platforms, song) {
   if (!platforms || platforms.length === 0) return '';
   
   const platformNames = {
@@ -460,7 +567,8 @@ function renderPlatformLinks(platforms) {
   html += platforms.map(p => {
     const name = platformNames[p.platform] || p.platform;
     const note = p.notes ? ` (${p.notes})` : '';
-    return `<a href="${p.url}" target="_blank" class="platform-link">${name}${note}</a>`;
+    const onClickHandler = song ? ` onclick="window.markSongListened(window._currentSong)"` : '';
+    return `<a href="${p.url}" target="_blank" class="platform-link"${onClickHandler}>${name}${note}</a>`;
   }).join(' • ');
   html += '</p>';
   return html;
@@ -690,7 +798,7 @@ function showSong(song) {
       html += `<p><strong>Genres:</strong> ${songGenres.map((g, idx) => `<span class="link" onclick="window.showGenreDirect(${idx}, 'song')">${g.name || 'Unknown'}</span>`).join(", ")}</p>`;
     }
     
-    html += renderPlatformLinks(songPlatforms);
+    html += renderPlatformLinks(songPlatforms, song);
 
     html += `<div style="margin-top:1rem">
       <button id="listen-btn" class="primary-btn">${currentUser ? 'Mark as listened' : 'Login to track progress'}</button>
@@ -743,6 +851,10 @@ function showSong(song) {
     }
 
     getMainContent().innerHTML = html;
+    
+    // Store current song for platform link handlers
+    window._currentSong = song;
+    
     const listenBtn = document.getElementById("listen-btn");
     if (listenBtn) {
       listenBtn.onclick = () => markSongListened(song);
@@ -1119,6 +1231,12 @@ function renderQuestTitle(quest) {
           const artist = allArtists.find(a => a && a.id === p.artistId);
           title += ` by ${artist ? artist.name : p.artistId}`;
         }
+        break;
+      
+      case 'location_checkin':
+        const checkInNumber = p.number || 1;
+        const locationType = p.locationtype || 'location';
+        title = `Check in at ${checkInNumber} ${locationType}${checkInNumber > 1 ? 's' : ''}`;
         break;
       
       default:
@@ -2326,6 +2444,164 @@ function showDeveloperTab() {
   renderSongsWithoutQuests();
 }
 
+let mapInstance = null;
+let userMarker = null;
+
+function showMapTab() {
+  const tabs = document.querySelectorAll('.tab-btn');
+  tabs.forEach(tab => tab.classList.remove('active'));
+  const mapTabButtons = document.querySelectorAll('.tab-btn');
+  mapTabButtons[3].classList.add('active'); // Map is 4th tab (0-indexed)
+
+  getMainContent().innerHTML = `
+    <h1>Map</h1>
+    <p class="muted">Track your location and discover music venues nearby</p>
+
+    <div id="map-container" style="width: 100%; height: 500px; background: #1a1d24; border-radius: 8px; position: relative;">
+      <div id="map-loading" style="display: flex; align-items: center; justify-content: center; height: 100%; color: #9aa0b5;">
+        <p>Requesting location permission...</p>
+      </div>
+      <div id="map-view" style="width: 100%; height: 100%; border-radius: 8px; display: none;"></div>
+    </div>
+
+    <div id="manual-location" style="display: none; margin-top: 1rem;">
+      <div class="section-card">
+        <h3>Enter Your Location Manually</h3>
+        <p class="muted">Location access was denied or is unavailable. Please enter your address or city.</p>
+        <form id="manual-location-form" style="margin-top: 1rem;">
+          <div style="margin-bottom: 0.75rem;">
+            <label for="address-input" style="display: block; margin-bottom: 0.25rem; color: #9aa0b5;">Address or City</label>
+            <input type="text" id="address-input" placeholder="Enter address or city..." 
+              style="width: 100%; padding: 0.5rem; background: #1a1d24; border: 1px solid #2a2d34; border-radius: 4px; color: #e4e6eb;" />
+          </div>
+          <button type="submit" class="primary-btn">Show Location</button>
+          <span id="geocode-status" style="margin-left: 0.5rem; color: #9aa0b5;"></span>
+        </form>
+      </div>
+    </div>
+
+    <div id="location-info" style="margin-top: 1rem; display: none;">
+      <div class="section-card">
+        <h3>Your Location</h3>
+        <p id="location-coords" class="muted"></p>
+      </div>
+    </div>
+  `;
+
+  navigationHistory = [{ type: "map" }];
+  updateBackButton();
+
+  // Try to get user's location
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      // Success callback
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        showMapWithLocation(lat, lon);
+      },
+      // Error callback
+      (error) => {
+        console.log('Geolocation error:', error);
+        showManualLocationInput();
+      },
+      // Options
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  } else {
+    showManualLocationInput();
+  }
+
+  // Setup manual location form
+  const form = document.getElementById('manual-location-form');
+  if (form) {
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const address = document.getElementById('address-input').value;
+      const statusEl = document.getElementById('geocode-status');
+      
+      if (!address) {
+        if (statusEl) statusEl.textContent = 'Please enter an address';
+        return;
+      }
+
+      if (statusEl) statusEl.textContent = 'Looking up location...';
+
+      try {
+        // Use Nominatim (OpenStreetMap) for geocoding
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lon = parseFloat(data[0].lon);
+          showMapWithLocation(lat, lon);
+          if (statusEl) statusEl.textContent = '';
+        } else {
+          if (statusEl) statusEl.textContent = 'Location not found. Try a different address.';
+        }
+      } catch (err) {
+        console.error('Geocoding error:', err);
+        if (statusEl) statusEl.textContent = 'Error looking up location.';
+      }
+    };
+  }
+}
+
+function showMapWithLocation(lat, lon) {
+  const mapLoading = document.getElementById('map-loading');
+  const mapView = document.getElementById('map-view');
+  const manualLocation = document.getElementById('manual-location');
+  const locationInfo = document.getElementById('location-info');
+  const locationCoords = document.getElementById('location-coords');
+
+  if (mapLoading) mapLoading.style.display = 'none';
+  if (mapView) mapView.style.display = 'block';
+  if (manualLocation) manualLocation.style.display = 'none';
+  if (locationInfo) locationInfo.style.display = 'block';
+  if (locationCoords) {
+    locationCoords.textContent = `Latitude: ${lat.toFixed(6)}, Longitude: ${lon.toFixed(6)}`;
+  }
+
+  // Initialize or update map
+  if (!mapInstance) {
+    mapInstance = L.map('map-view').setView([lat, lon], 13);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(mapInstance);
+  } else {
+    mapInstance.setView([lat, lon], 13);
+  }
+
+  // Add or update user marker
+  if (userMarker) {
+    userMarker.setLatLng([lat, lon]);
+  } else {
+    userMarker = L.marker([lat, lon]).addTo(mapInstance)
+      .bindPopup('You are here!')
+      .openPopup();
+  }
+}
+
+function showManualLocationInput() {
+  const mapLoading = document.getElementById('map-loading');
+  const manualLocation = document.getElementById('manual-location');
+
+  if (mapLoading) {
+    mapLoading.innerHTML = '<p>Location access denied or unavailable.</p>';
+  }
+  if (manualLocation) {
+    manualLocation.style.display = 'block';
+  }
+}
+
 
 // Listen for auth state changes
 function initAuthListener() {
@@ -2348,6 +2624,7 @@ console.log('[app.js] About to expose functions to window');
 window.showSearchTab = showSearchTab;
 window.showCollectionTab = showCollectionTab;
 window.showProfileTab = showProfileTab;
+window.showMapTab = showMapTab;
 window.showDeveloperTab = showDeveloperTab;
 window.showArtist = showArtist;
 window.showAlbum = showAlbum;

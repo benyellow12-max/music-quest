@@ -57,7 +57,7 @@
   {
     "id": "qtpl_0007",
     "type": "travel_amount",
-    "description": "Travel to {{number}} places",
+    "description": "Check in at {{number}} locations",
     "params": {
       "number": "number"
     }
@@ -78,6 +78,15 @@
     "description": "Connect {{accountType}} to your Music Quest account",
     "params": {
       "accountType": "string"
+    }
+  },
+  {
+    "id": "qtpl_0010",
+    "type": "location_checkin",
+    "description": "Check in at {{number}} {{locationtype}}",
+    "params":{
+      "number": "number",
+      "locationtype": "string"
     }
   }
 ]

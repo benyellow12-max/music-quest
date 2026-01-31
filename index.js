@@ -6,6 +6,16 @@ const path = require("path");
 const { verifyToken } = require('./server-firebase');
 const { clearCache } = require("./lib/db");
 const { expandAllSongsGenres } = require('./lib/genreHierarchy');
+const {
+  getTemplate,
+  validateQuestParams,
+  getTemplateMatchCriteria,
+  renderTemplateDescription,
+  getTemplateRequiredParams,
+  canCreateQuestFromTemplate,
+  groupTemplatesByType,
+  getTemplatesRequiringEntities
+} = require('./lib/templateUtils');
 
 console.log("[STARTUP] Starting server initialization...");
 
@@ -104,6 +114,13 @@ function reloadDataFromDisk() {
   quests = loadDataFile(questsPath, "quests");
   questTemplates = loadDataFile(questTemplatesPath, "quest templates");
 
+  // Clean up any stale matchedRecordingIdsSet from old saves (they're just caches)
+  quests.forEach(quest => {
+    if (quest.state && quest.state.matchedRecordingIdsSet) {
+      delete quest.state.matchedRecordingIdsSet;
+    }
+  });
+
   // Expand songs to include parent genres automatically
   songs = expandAllSongsGenres(songs, genres);
 
@@ -155,7 +172,13 @@ function scheduleQuestWrite() {
   questWritePending = true;
   
   setImmediate(() => {
-    fs.writeFile(questsPath, JSON.stringify(quests, null, 2), (err) => {
+    // Remove matchedRecordingIdsSet before saving (it's just a cache that gets rebuilt)
+    const questsToSave = quests.map(q => {
+      const { matchedRecordingIdsSet, ...rest } = q.state;
+      return { ...q, state: rest };
+    });
+    
+    fs.writeFile(questsPath, JSON.stringify(questsToSave, null, 2), (err) => {
       if (err) console.error("Error writing quests:", err);
       questWritePending = false;
     });
@@ -179,10 +202,13 @@ app.post("/listen/:recordingId", verifyToken, (req, res) => {
     return res.status(404).json({ error: "Recording not found" });
   }
 
+  // Capture the current timestamp for time-based quests
+  const listenTime = new Date();
+
   // TODO: In the future, load user-specific quests from Firestore
   // For now, still using global quests.json
   quests.forEach(quest => {
-    applyListenEvent(quest, recording);
+    applyListenEvent(quest, recording, listenTime);
   });
 
   // Use async write instead of blocking sync write
@@ -510,6 +536,33 @@ app.get("/quest-templates", (req, res) => {
   res.json(questTemplates);
 });
 
+// Get detailed information about a specific template
+app.get("/quest-templates/:id", (req, res) => {
+  const template = getTemplate(req.params.id, questTemplates);
+  
+  if (!template) {
+    return res.status(404).json({ error: "Template not found" });
+  }
+
+  const validation = validateQuestParams({}, template);
+  const criteria = getTemplateMatchCriteria(template);
+  const requiredParams = getTemplateRequiredParams(template);
+
+  res.json({
+    ...template,
+    criteria,
+    requiredParams,
+    paramSchema: template.params
+  });
+});
+
+// Get templates by type
+app.get("/quest-templates/type/:type", (req, res) => {
+  const typeTemplates = questTemplates.filter(t => t.type === req.params.type);
+  
+  res.json(typeTemplates);
+});
+
 app.get("/quests/:id", (req, res) => {
   const quest = quests.find(q => q.id === req.params.id);
 
@@ -517,13 +570,21 @@ app.get("/quests/:id", (req, res) => {
     return res.status(404).json({ error: "Quest not found" });
   }
 
-  const template = questTemplates.find(
-    t => t.id === quest.templateId
-  );
+  const template = getTemplate(quest.templateId, questTemplates);
+
+  // Validate quest parameters against template
+  let validation = null;
+  if (template) {
+    validation = validateQuestParams(quest.params, template);
+  }
 
   res.json({
     ...quest,
-    template
+    template,
+    validation: {
+      isValid: validation ? validation.valid : null,
+      errors: validation ? validation.errors : []
+    }
   });
 });
 
@@ -563,6 +624,31 @@ app.get("/search", (req, res) => {
   res.json({ artists: searchArtists, albums: searchAlbums, genres: searchGenres, songs: searchSongs });
 });
 
+// Validate quest parameters against a template
+app.post("/validate-quest-params", (req, res) => {
+  const { templateId, params } = req.body;
+
+  if (!templateId) {
+    return res.status(400).json({ error: "templateId is required" });
+  }
+
+  const template = getTemplate(templateId, questTemplates);
+  
+  if (!template) {
+    return res.status(404).json({ error: "Template not found" });
+  }
+
+  const validation = validateQuestParams(params, template);
+  
+  res.json({
+    templateId,
+    template,
+    validation,
+    criteria: getTemplateMatchCriteria(template),
+    requiredParams: getTemplateRequiredParams(template)
+  });
+});
+
 // Developer utilities
 app.post("/developer/cache/clear", (req, res) => {
   try {
@@ -593,12 +679,18 @@ app.post("/developer/quests/reset", (req, res) => {
     quests.forEach(quest => {
       quest.state = {
         status: "active",
-        matchedRecordingIds: [],
-        matchedRecordingIdsSet: {}
+        matchedRecordingIds: []
+        // Don't include matchedRecordingIdsSet - it's rebuilt automatically
       };
     });
     
-    fs.writeFileSync(questsPath, JSON.stringify(quests, null, 2));
+    // Remove matchedRecordingIdsSet before saving (it's just a cache)
+    const questsToSave = quests.map(q => {
+      const { matchedRecordingIdsSet, ...rest } = q.state;
+      return { ...q, state: rest };
+    });
+    
+    fs.writeFileSync(questsPath, JSON.stringify(questsToSave, null, 2));
     
     res.json({
       success: true,

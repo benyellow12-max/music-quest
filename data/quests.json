@@ -6,9 +6,10 @@
       "requiredCount": 1
     },
     "state": {
-      "status": "active",
-      "matchedRecordingIds": [],
-      "matchedRecordingIdsSet": {}
+      "status": "completed",
+      "matchedRecordingIds": [
+        "rec_0001"
+      ]
     },
     "reward": {
       "type": "song",
@@ -24,8 +25,9 @@
     },
     "state": {
       "status": "active",
-      "matchedRecordingIds": [],
-      "matchedRecordingIdsSet": {}
+      "matchedRecordingIds": [
+        "rec_0001"
+      ]
     },
     "reward": {
       "type": "song",
@@ -43,8 +45,7 @@
     },
     "state": {
       "status": "active",
-      "matchedRecordingIds": [],
-      "matchedRecordingIdsSet": {}
+      "matchedRecordingIds": []
     },
     "reward": {
       "type": "song",
@@ -61,8 +62,7 @@
     },
     "state": {
       "status": "active",
-      "matchedRecordingIds": [],
-      "matchedRecordingIdsSet": {}
+      "matchedRecordingIds": []
     },
     "reward": {
       "type": "song",
@@ -79,8 +79,7 @@
     },
     "state": {
       "status": "active",
-      "matchedRecordingIds": [],
-      "matchedRecordingIdsSet": {}
+      "matchedRecordingIds": []
     },
     "reward": {
       "type": "song",
@@ -94,9 +93,10 @@
       "number": 15
     },
     "state": {
-      "status": "active",
-      "matchedRecordingIds": [],
-      "matchedRecordingIdsSet": {}
+      "status": "completed",
+      "matchedRecordingIds": [
+        "rec_0001"
+      ]
     },
     "reward": {
       "type": "song",
@@ -113,8 +113,7 @@
     },
     "state": {
       "status": "active",
-      "matchedRecordingIds": [],
-      "matchedRecordingIdsSet": {}
+      "matchedRecordingIds": []
     },
     "reward": {
       "type": "song",
@@ -131,12 +130,29 @@
     },
     "state": {
       "status": "active",
-      "matchedRecordingIds": [],
-      "matchedRecordingIdsSet": {}
+      "matchedRecordingIds": []
     },
     "reward": {
       "type": "song",
       "entityId": "rec_0008"
+    }
+  },
+  {
+    "id": "qst_0009",
+    "templateId": "qtpl_0010",
+    "params": {
+      "number": 1,
+      "locationtype": "prisons"
+    },
+    "state": {
+      "status": "completed",
+      "matchedRecordingIds": [
+        "rec_0001"
+      ]
+    },
+    "reward": {
+      "type": "song",
+      "entityId": "rec_0009"
     }
   }
 ]

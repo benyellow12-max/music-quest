@@ -1,12 +1,13 @@
 const { recordingMatchesQuest } = require("./questmatcher");
 
-function applyListenEvent(quest, recording) {
+function applyListenEvent(quest, recording, listenTime = new Date()) {
   if (quest.state.status !== "active") {
     return quest;
   }
 
   // Convert to Set on first use for O(1) lookups
-  if (!quest.state.matchedRecordingIdsSet) {
+  // Also rebuild if it's not actually a Set (e.g., loaded as {} from JSON)
+  if (!quest.state.matchedRecordingIdsSet || !(quest.state.matchedRecordingIdsSet instanceof Set)) {
     quest.state.matchedRecordingIdsSet = new Set(quest.state.matchedRecordingIds);
   }
 
@@ -16,8 +17,8 @@ function applyListenEvent(quest, recording) {
     return quest;
   }
 
-  // check constraints
-  if (!recordingMatchesQuest(recording, quest)) {
+  // check constraints (pass listenTime for time-based quests)
+  if (!recordingMatchesQuest(recording, quest, [], listenTime)) {
     return quest;
   }
 
