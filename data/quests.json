@@ -6,10 +6,8 @@
       "requiredCount": 1
     },
     "state": {
-      "status": "completed",
-      "matchedRecordingIds": [
-        "rec_0001"
-      ]
+      "status": "active",
+      "matchedRecordingIds": []
     },
     "reward": {
       "type": "song",
@@ -25,9 +23,7 @@
     },
     "state": {
       "status": "active",
-      "matchedRecordingIds": [
-        "rec_0001"
-      ]
+      "matchedRecordingIds": []
     },
     "reward": {
       "type": "song",
@@ -93,10 +89,8 @@
       "number": 15
     },
     "state": {
-      "status": "completed",
-      "matchedRecordingIds": [
-        "rec_0001"
-      ]
+      "status": "active",
+      "matchedRecordingIds": []
     },
     "reward": {
       "type": "song",
@@ -145,10 +139,8 @@
       "locationtype": "prisons"
     },
     "state": {
-      "status": "completed",
-      "matchedRecordingIds": [
-        "rec_0001"
-      ]
+      "status": "active",
+      "matchedRecordingIds": []
     },
     "reward": {
       "type": "song",

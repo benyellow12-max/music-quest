@@ -56,6 +56,7 @@ const platformsPath = path.join(__dirname, "data", "platforms.json");
 const genresPath = path.join(__dirname, "data", "genres.json");
 const questsPath = path.join(__dirname, "data", "quests.json");
 const questTemplatesPath = path.join(__dirname, "data", "questTemplates.json");
+const locationsPath = path.join(__dirname, "data", "locations.json");
 
 let songs = [];
 let artists = [];
@@ -64,6 +65,7 @@ let platforms = [];
 let genres = [];
 let quests = [];
 let questTemplates = [];
+let locations = [];
 
 // Lookup maps for O(1) access instead of repeated .find()
 const artistsMap = new Map();
@@ -113,6 +115,7 @@ function reloadDataFromDisk() {
   genres = loadDataFile(genresPath, "genres");
   quests = loadDataFile(questsPath, "quests");
   questTemplates = loadDataFile(questTemplatesPath, "quest templates");
+  locations = loadDataFile(locationsPath, "locations");
 
   // Clean up any stale matchedRecordingIdsSet from old saves (they're just caches)
   quests.forEach(quest => {
@@ -257,6 +260,11 @@ app.get("/artists", (req, res) => {
 app.get("/platforms", (req, res) => {
   res.set('Cache-Control', 'public, max-age=60');
   res.json(platforms);
+});
+
+app.get("/locations", (req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  res.json(locations);
 });
 
 // In-memory user storage (in production, use a database)

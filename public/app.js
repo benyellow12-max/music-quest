@@ -2446,6 +2446,7 @@ function showDeveloperTab() {
 
 let mapInstance = null;
 let userMarker = null;
+let locationMarkers = [];
 
 function showMapTab() {
   const tabs = document.querySelectorAll('.tab-btn');
@@ -2462,6 +2463,34 @@ function showMapTab() {
         <p>Requesting location permission...</p>
       </div>
       <div id="map-view" style="width: 100%; height: 100%; border-radius: 8px; display: none;"></div>
+    </div>
+
+    <div id="map-legend" style="margin-top: 1rem; display: none;">
+      <div class="section-card">
+        <h3>Location Types</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem; margin-top: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 12px; height: 12px; background: #3b82f6; border-radius: 50%;"></span>
+            <span>You</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 12px; height: 12px; background: #ef4444; border-radius: 50%;"></span>
+            <span>Venues</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 12px; height: 12px; background: #22c55e; border-radius: 50%;"></span>
+            <span>Record Stores</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 12px; height: 12px; background: #8b5cf6; border-radius: 50%;"></span>
+            <span>Museums</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 12px; height: 12px; background: #f97316; border-radius: 50%;"></span>
+            <span>Recording Studios</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div id="manual-location" style="display: none; margin-top: 1rem;">
@@ -2558,11 +2587,13 @@ function showMapWithLocation(lat, lon) {
   const manualLocation = document.getElementById('manual-location');
   const locationInfo = document.getElementById('location-info');
   const locationCoords = document.getElementById('location-coords');
+  const mapLegend = document.getElementById('map-legend');
 
   if (mapLoading) mapLoading.style.display = 'none';
   if (mapView) mapView.style.display = 'block';
   if (manualLocation) manualLocation.style.display = 'none';
   if (locationInfo) locationInfo.style.display = 'block';
+  if (mapLegend) mapLegend.style.display = 'block';
   if (locationCoords) {
     locationCoords.textContent = `Latitude: ${lat.toFixed(6)}, Longitude: ${lon.toFixed(6)}`;
   }
@@ -2584,10 +2615,90 @@ function showMapWithLocation(lat, lon) {
   if (userMarker) {
     userMarker.setLatLng([lat, lon]);
   } else {
-    userMarker = L.marker([lat, lon]).addTo(mapInstance)
-      .bindPopup('You are here!')
+    userMarker = L.marker([lat, lon], {
+      icon: L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      })
+    }).addTo(mapInstance)
+      .bindPopup('<strong>You are here!</strong>')
       .openPopup();
   }
+
+  // Fetch and display locations
+  fetch('/locations')
+    .then(res => res.json())
+    .then(locations => {
+      // Clear existing location markers
+      locationMarkers.forEach(marker => marker.remove());
+      locationMarkers = [];
+
+      // Add markers for each location
+      locations.forEach(location => {
+        if (!location.active) return; // Skip inactive locations
+
+        // Create custom icon based on location type
+        let iconUrl;
+        switch (location.type) {
+          case 'venue':
+            iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
+            break;
+          case 'record_store':
+            iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png';
+            break;
+          case 'museum':
+            iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png';
+            break;
+          case 'recording_studio':
+            iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png';
+            break;
+          default:
+            iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png';
+        }
+
+        const marker = L.marker([location.coordinates.lat, location.coordinates.lon], {
+          icon: L.icon({
+            iconUrl: iconUrl,
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+          })
+        }).addTo(mapInstance);
+
+        // Calculate distance from user
+        const distance = calculateDistance(lat, lon, location.coordinates.lat, location.coordinates.lon);
+        const distanceText = distance < 1 ? `${(distance * 1000).toFixed(0)} m` : `${distance.toFixed(2)} km`;
+
+        // Create popup content
+        const popupContent = `
+          <div style="min-width: 200px;">
+            <strong style="font-size: 1.1em; color: #e4e6eb;">${location.name}</strong>
+            <p style="margin: 0.25rem 0; color: #9aa0b5; font-size: 0.85em;">${location.subtype.replace(/_/g, ' ')}</p>
+            <p style="margin: 0.5rem 0; font-size: 0.9em;">${location.description}</p>
+            <p style="margin: 0.5rem 0; color: #9aa0b5; font-size: 0.85em;">${location.address}</p>
+            <p style="margin: 0.25rem 0; color: #4a9eff; font-size: 0.9em;"><strong>Distance:</strong> ${distanceText}</p>
+            ${distance <= (location.checkInRadius / 1000) ? 
+              `<button onclick="checkInAtLocation('${location.id}')" class="primary-btn" style="margin-top: 0.5rem; padding: 0.4rem 0.8rem; font-size: 0.85em;">Check In</button>` :
+              `<p style="margin-top: 0.5rem; color: #ff6b6b; font-size: 0.85em;">Too far to check in (within ${location.checkInRadius}m required)</p>`
+            }
+          </div>
+        `;
+
+        marker.bindPopup(popupContent);
+        locationMarkers.push(marker);
+      });
+
+      console.log(`Loaded ${locations.length} locations on map`);
+    })
+    .catch(err => {
+      console.error('Failed to load locations:', err);
+    });
 }
 
 function showManualLocationInput() {
@@ -2600,6 +2711,29 @@ function showManualLocationInput() {
   if (manualLocation) {
     manualLocation.style.display = 'block';
   }
+}
+
+// Calculate distance between two coordinates using Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Check in at a location
+function checkInAtLocation(locationId) {
+  console.log(`Checking in at location: ${locationId}`);
+  // TODO: Implement check-in logic with backend
+  // This should:
+  // 1. Record the check-in event
+  // 2. Update relevant quests (location_checkin type)
+  // 3. Show success message
+  alert(`Check-in at ${locationId} - Coming soon!`);
 }
 
 
@@ -2636,6 +2770,7 @@ window.showAlbumsPage = showAlbumsPage;
 window.showGenresPage = showGenresPage;
 window.goBack = goBack;
 window.markSongListened = markSongListened;
+window.checkInAtLocation = checkInAtLocation;
 console.log('[app.js] Functions exposed to window, goBack is:', typeof window.goBack);
 
 // Fallback in case the initial visibility set runs before layout is ready
