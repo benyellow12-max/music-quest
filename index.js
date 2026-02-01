@@ -56,7 +56,6 @@ const platformsPath = path.join(__dirname, "data", "platforms.json");
 const genresPath = path.join(__dirname, "data", "genres.json");
 const questsPath = path.join(__dirname, "data", "quests.json");
 const questTemplatesPath = path.join(__dirname, "data", "questTemplates.json");
-const locationsPath = path.join(__dirname, "data", "locations.json");
 
 let songs = [];
 let artists = [];
@@ -65,7 +64,11 @@ let platforms = [];
 let genres = [];
 let quests = [];
 let questTemplates = [];
-let locations = [];
+const OSM_OVERPASS_URL = process.env.OSM_OVERPASS_URL || "https://overpass-api.de/api/interpreter";
+const OSM_SEARCH_RADIUS = Number.parseInt(process.env.OSM_SEARCH_RADIUS || "2000", 10);
+const OSM_MAX_RESULTS = Number.parseInt(process.env.OSM_MAX_RESULTS || "250", 10);
+const OSM_CACHE_TTL_MS = Number.parseInt(process.env.OSM_CACHE_TTL_MS || "300000", 10);
+const osmCache = new Map();
 
 // Lookup maps for O(1) access instead of repeated .find()
 const artistsMap = new Map();
@@ -83,6 +86,116 @@ function loadDataFile(filePath, label) {
     console.error(`Failed to load ${label}:`, err.message);
     return [];
   }
+}
+
+function formatTitle(value) {
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function formatOsmAddress(tags) {
+  const parts = [];
+  const house = tags["addr:housenumber"];
+  const street = tags["addr:street"];
+  const city = tags["addr:city"] || tags["addr:town"] || tags["addr:village"];
+  const state = tags["addr:state"];
+  const postcode = tags["addr:postcode"];
+
+  if (house && street) parts.push(`${house} ${street}`);
+  else if (street) parts.push(street);
+  if (city) parts.push(city);
+  if (state) parts.push(state);
+  if (postcode) parts.push(postcode);
+
+  return parts.join(", ");
+}
+
+function getOsmCategory(tags) {
+  if (tags.amenity) return { type: "amenity", subtype: tags.amenity, label: formatTitle(tags.amenity) };
+  if (tags.shop) return { type: "shop", subtype: tags.shop, label: `${formatTitle(tags.shop)} Shop` };
+  if (tags.tourism) return { type: "tourism", subtype: tags.tourism, label: formatTitle(tags.tourism) };
+  if (tags.leisure) return { type: "leisure", subtype: tags.leisure, label: formatTitle(tags.leisure) };
+  if (tags.natural) return { type: "natural", subtype: tags.natural, label: formatTitle(tags.natural) };
+  if (tags.historic) return { type: "historic", subtype: tags.historic, label: formatTitle(tags.historic) };
+  if (tags.sport) return { type: "sport", subtype: tags.sport, label: `${formatTitle(tags.sport)} Sport` };
+  if (tags.office) return { type: "office", subtype: tags.office, label: `${formatTitle(tags.office)} Office` };
+  if (tags.man_made) return { type: "man_made", subtype: tags.man_made, label: formatTitle(tags.man_made) };
+  if (tags.waterway) return { type: "waterway", subtype: tags.waterway, label: formatTitle(tags.waterway) };
+  if (tags.railway || tags.public_transport || tags.highway) return { type: "transport", subtype: tags.railway || tags.public_transport || tags.highway, label: "Transport" };
+  if (tags.place) return { type: "place", subtype: tags.place, label: formatTitle(tags.place) };
+  if (tags.landuse) return { type: "landuse", subtype: tags.landuse, label: formatTitle(tags.landuse) };
+  if (tags.building) return { type: "building", subtype: tags.building, label: formatTitle(tags.building) };
+  return { type: "other", subtype: "unknown", label: "Point of Interest" };
+}
+
+function distanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+async function fetchOsmLocations(lat, lon, radius, limit) {
+  const query = `[out:json][timeout:25];
+(
+  node(around:${radius},${lat},${lon})["name"][!highway][!place];
+  way(around:${radius},${lat},${lon})["name"][!highway][!place];
+  relation(around:${radius},${lat},${lon})["name"][!highway][!place];
+);
+out center tags;`;
+
+  const response = await fetch(OSM_OVERPASS_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain",
+      "User-Agent": "music-quest/1.0 (OpenStreetMap Overpass client)"
+    },
+    body: query
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Overpass error ${response.status}: ${text.slice(0, 200)}`);
+  }
+
+  const data = await response.json();
+  const elements = Array.isArray(data.elements) ? data.elements : [];
+  const locations = elements.map(el => {
+    const tags = el.tags || {};
+    const name = tags.name;
+    if (!name) return null;
+    if (tags.highway || tags.place) return null;
+    const center = el.type === "node" ? { lat: el.lat, lon: el.lon } : el.center;
+    if (!center || typeof center.lat !== "number" || typeof center.lon !== "number") return null;
+    const category = getOsmCategory(tags);
+
+    return {
+      id: `osm_${el.type}_${el.id}`,
+      name,
+      type: category.type,
+      subtype: category.subtype,
+      description: category.label,
+      address: formatOsmAddress(tags),
+      coordinates: { lat: center.lat, lon: center.lon },
+      active: true,
+      checkInRadius: 100,
+      source: "openstreetmap"
+    };
+  }).filter(Boolean);
+
+  const withDistance = locations.map(loc => ({
+    ...loc,
+    _distance: distanceKm(lat, lon, loc.coordinates.lat, loc.coordinates.lon)
+  }));
+
+  withDistance.sort((a, b) => a._distance - b._distance);
+
+  return withDistance.slice(0, limit).map(({ _distance, ...rest }) => rest);
 }
 
 function rebuildIndexes() {
@@ -115,7 +228,6 @@ function reloadDataFromDisk() {
   genres = loadDataFile(genresPath, "genres");
   quests = loadDataFile(questsPath, "quests");
   questTemplates = loadDataFile(questTemplatesPath, "quest templates");
-  locations = loadDataFile(locationsPath, "locations");
 
   // Clean up any stale matchedRecordingIdsSet from old saves (they're just caches)
   quests.forEach(quest => {
@@ -263,8 +375,35 @@ app.get("/platforms", (req, res) => {
 });
 
 app.get("/locations", (req, res) => {
-  res.set('Cache-Control', 'public, max-age=300');
-  res.json(locations);
+  const lat = Number.parseFloat(req.query.lat);
+  const lon = Number.parseFloat(req.query.lon);
+  const radius = Number.parseInt(req.query.radius || OSM_SEARCH_RADIUS, 10);
+  const limit = Number.parseInt(req.query.limit || OSM_MAX_RESULTS, 10);
+
+  if (Number.isNaN(lat) || Number.isNaN(lon)) {
+    return res.status(400).json({ error: "lat and lon query parameters are required" });
+  }
+
+  const safeRadius = Number.isFinite(radius) && radius > 0 ? Math.min(radius, 10000) : OSM_SEARCH_RADIUS;
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 1000) : OSM_MAX_RESULTS;
+  const cacheKey = `${lat.toFixed(3)}:${lon.toFixed(3)}:${safeRadius}:${safeLimit}`;
+  const now = Date.now();
+  const cached = osmCache.get(cacheKey);
+  if (cached && (now - cached.ts) < OSM_CACHE_TTL_MS) {
+    res.set('Cache-Control', 'public, max-age=120');
+    return res.json(cached.data);
+  }
+
+  fetchOsmLocations(lat, lon, safeRadius, safeLimit)
+    .then(results => {
+      osmCache.set(cacheKey, { ts: Date.now(), data: results });
+      res.set('Cache-Control', 'public, max-age=120');
+      res.json(results);
+    })
+    .catch(err => {
+      console.error("OSM lookup failed:", err);
+      res.status(502).json({ error: "Failed to load locations from OpenStreetMap" });
+    });
 });
 
 // In-memory user storage (in production, use a database)

@@ -2456,7 +2456,7 @@ function showMapTab() {
 
   getMainContent().innerHTML = `
     <h1>Map</h1>
-    <p class="muted">Track your location and discover music venues nearby</p>
+    <p class="muted">Track your location and discover places nearby</p>
 
     <div id="map-container" style="width: 100%; height: 500px; background: #1a1d24; border-radius: 8px; position: relative;">
       <div id="map-loading" style="display: flex; align-items: center; justify-content: center; height: 100%; color: #9aa0b5;">
@@ -2475,19 +2475,27 @@ function showMapTab() {
           </div>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="display: inline-block; width: 12px; height: 12px; background: #ef4444; border-radius: 50%;"></span>
-            <span>Venues</span>
+            <span>Amenities</span>
           </div>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="display: inline-block; width: 12px; height: 12px; background: #22c55e; border-radius: 50%;"></span>
-            <span>Record Stores</span>
+            <span>Shops</span>
           </div>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="display: inline-block; width: 12px; height: 12px; background: #8b5cf6; border-radius: 50%;"></span>
-            <span>Museums</span>
+            <span>Tourism & Culture</span>
           </div>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="display: inline-block; width: 12px; height: 12px; background: #f97316; border-radius: 50%;"></span>
-            <span>Recording Studios</span>
+            <span>Leisure & Nature</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 12px; height: 12px; background: #eab308; border-radius: 50%;"></span>
+            <span>Transport</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 12px; height: 12px; background: #9ca3af; border-radius: 50%;"></span>
+            <span>Other</span>
           </div>
         </div>
       </div>
@@ -2630,7 +2638,9 @@ function showMapWithLocation(lat, lon) {
   }
 
   // Fetch and display locations
-  fetch('/locations')
+  const searchRadius = 2000; // meters
+  const searchLimit = 300;
+  fetch(`/locations?lat=${lat}&lon=${lon}&radius=${searchRadius}&limit=${searchLimit}`)
     .then(res => res.json())
     .then(locations => {
       // Clear existing location markers
@@ -2644,17 +2654,22 @@ function showMapWithLocation(lat, lon) {
         // Create custom icon based on location type
         let iconUrl;
         switch (location.type) {
-          case 'venue':
+          case 'amenity':
             iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
             break;
-          case 'record_store':
+          case 'shop':
             iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png';
             break;
-          case 'museum':
+          case 'tourism':
+          case 'historic':
             iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png';
             break;
-          case 'recording_studio':
+          case 'leisure':
+          case 'natural':
             iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png';
+            break;
+          case 'transport':
+            iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png';
             break;
           default:
             iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png';
@@ -2679,9 +2694,9 @@ function showMapWithLocation(lat, lon) {
         const popupContent = `
           <div style="min-width: 200px;">
             <strong style="font-size: 1.1em; color: #e4e6eb;">${location.name}</strong>
-            <p style="margin: 0.25rem 0; color: #9aa0b5; font-size: 0.85em;">${location.subtype.replace(/_/g, ' ')}</p>
-            <p style="margin: 0.5rem 0; font-size: 0.9em;">${location.description}</p>
-            <p style="margin: 0.5rem 0; color: #9aa0b5; font-size: 0.85em;">${location.address}</p>
+            <p style="margin: 0.25rem 0; color: #9aa0b5; font-size: 0.85em;">${(location.subtype || 'location').replace(/_/g, ' ')}</p>
+            <p style="margin: 0.5rem 0; font-size: 0.9em;">${location.description || 'Point of interest'}</p>
+            ${location.address ? `<p style="margin: 0.5rem 0; color: #9aa0b5; font-size: 0.85em;">${location.address}</p>` : ''}
             <p style="margin: 0.25rem 0; color: #4a9eff; font-size: 0.9em;"><strong>Distance:</strong> ${distanceText}</p>
             ${distance <= (location.checkInRadius / 1000) ? 
               `<button onclick="checkInAtLocation('${location.id}')" class="primary-btn" style="margin-top: 0.5rem; padding: 0.4rem 0.8rem; font-size: 0.85em;">Check In</button>` :
